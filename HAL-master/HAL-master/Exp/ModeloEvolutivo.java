@@ -57,12 +57,12 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
         super(x, y, Celula.class, true, true);
         this.seed=seed;
         rng=new Rand(seed);
-        limits = new float[]{10, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20};
+        limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5};
         starve = 0;
         apop = 0;
         move = 0;
         active = 0;
-        maxSamples = 10000;
+        maxSamples = 5000;
         muta = 0;
         strength = 0;
         reproduce = 0;
@@ -407,14 +407,15 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                     AverageStrength +=cell.strength;
 
                 }
-                for (Neural net:modelo.networks) {
+                for (int iterante = modelo.networks.size()-1;iterante >= 0; iterante--) {
+                    Neural net = modelo.networks.get(iterante);
                     if(net.Extinct && net.Samples<modelo.maxSamples){
                         for(int contador=0;contador<10;contador++) {
                             net.Sample(modelo.limits);
                             if(net.Samples >= modelo.maxSamples){
                                 Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
                                 String AcumError ="";
-                                for(int i=0;i<modelo.length;i++){
+                                for(int i=0;i<modelo.limits.length;i++){
                                     AcumError += net.acum_error[i];
                                 }
                                 StoreLine(modelo.filepath  + "Error.txt",net.index+AcumError);
@@ -425,8 +426,8 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                     }else if(net.Extinct){
                         Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
                         String AcumError ="";
-                        for(int i=0;i<modelo.length;i++){
-                            AcumError += net.acum_error[i];
+                        for(int i=0;i<modelo.limits.length;i++){
+                            AcumError += ";" + net.acum_error[i];
                         }
                         StoreLine(modelo.filepath  + "Error.txt",net.index+AcumError);
                         modelo.networks.remove(modelo.FindIndex(net.index));
@@ -443,14 +444,15 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                 Delete2(modelo.Data, "Tiempo" + time);
                 ++time;
             }
-            for (Neural net:modelo.networks) {
+            for (int iterante = modelo.networks.size()-1;iterante >= 0; iterante--) {
+                Neural net =modelo.networks.get(iterante);
                 while (net.Samples < modelo.maxSamples){
                     net.Sample(modelo.limits);
                 }
                 Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
                 String AcumError ="";
                 for(int i=0;i<modelo.length;i++){
-                    AcumError += net.acum_error[i];
+                    AcumError += ";" +  net.acum_error[i];
                 }
                 StoreLine(modelo.filepath  + "Error.txt",net.index+AcumError);
                 modelo.networks.remove(modelo.FindIndex(net.index));
