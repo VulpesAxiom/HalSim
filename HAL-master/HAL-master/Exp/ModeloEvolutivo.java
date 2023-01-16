@@ -26,6 +26,8 @@ import java.lang.System;
 public class ModeloEvolutivo extends AgentGrid2D<Celula> {
     String filepath;
     long seed;
+    int maxSamples;
+    float [] limits;
     Rand rng;
     int maxima;
     int maximumFood;
@@ -55,10 +57,12 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
         super(x, y, Celula.class, true, true);
         this.seed=seed;
         rng=new Rand(seed);
+        limits = new float[]{10, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20};
         starve = 0;
         apop = 0;
         move = 0;
         active = 0;
+        maxSamples = 10000;
         muta = 0;
         strength = 0;
         reproduce = 0;
@@ -296,8 +300,8 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
 
     public static void main(String[] args) throws Exception {
         Rand rng=new Rand(5984L);
-        int iter = 78;
-        while (iter > 77) {
+        int iter = 1;
+        while (iter < 2) {
             float MStrength;
             if(iter<26){
                  MStrength=0.10f;
@@ -403,6 +407,21 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                     AverageStrength +=cell.strength;
 
                 }
+                for (Neural net:modelo.networks) {
+                    if(net.Extinct && net.Samples<modelo.maxSamples){
+                        for(int contador=0;contador<10;contador++) {
+                            net.Sample(modelo.limits);
+                            if(net.Samples >= modelo.maxSamples){
+                                Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
+                                modelo.networks.remove(modelo.FindIndex(net.index));
+                                break;
+                            }
+                        }
+                    }else if(net.Extinct){
+                        Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
+                        modelo.networks.remove(modelo.FindIndex(net.index));
+                    }
+                }
                 StoreLine(modelo.filepath + "Mutabilidad.txt", time+";"+AverageStrength/countOfCells+";"+AverageFrequency/countOfCells );
 
                 //modelo.Feed(frequency, density);
@@ -414,6 +433,13 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                 Delete2(modelo.Data, "Tiempo" + time);
                 ++time;
             }
+            for (Neural net:modelo.networks) {
+                while (net.Samples < modelo.maxSamples){
+                    net.Sample(modelo.limits);
+                }
+                Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
+                modelo.networks.remove(modelo.FindIndex(net.index));
+            }
 
             modelo.Save("Saved", (1 + time / saveTime));
             while (modelo.Data.size() > 0) {
@@ -424,7 +450,7 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                 //Delete(modelo.Data, data.ID, modelo.Dictionary, modelo.filepath);
                 Delete2(modelo.Data, data.ID);
             }
-            iter--;
+            iter++;
         }
         System.exit(100);
     }
@@ -453,6 +479,7 @@ class Celula extends AgentSQ2D<ModeloEvolutivo> {
 
     public void Step(int time) {
 
+
         assert G != null;
         int bound = 10;
         float rng = (float) G.rng.Int(bound);
@@ -480,6 +507,9 @@ class Celula extends AgentSQ2D<ModeloEvolutivo> {
 
 
         float[] output = G.networks.get(G.FindIndex(index)).Compute(input, 1);
+        if(G.networks.get(G.FindIndex(index)).Samples < G.maxSamples ) {
+            G.networks.get(G.FindIndex(index)).Sample(G.limits);
+        }
         float[] dz=new float[input.length];
         dz[1] = 0;//G.networks.get(G.FindIndex(index)).TestDiameter(input, 0, G.maxima, 1);
         dz[0] = 0;//G.networks.get(G.FindIndex(index)).TestDiameter(input, 0, bound-1, 0);
@@ -592,8 +622,9 @@ class Celula extends AgentSQ2D<ModeloEvolutivo> {
         if (G.networks.get(G.FindIndex(index)).population == 0) {
             String data=Collect(G.Data,"Especie"+index, G.Dictionary);
             StoreLine(G.filepath+"GenData.txt",G.networks.get(G.FindIndex(index)).index+";"+G.networks.get(G.FindIndex(index)).parentIndex+";"+G.networks.get(G.FindIndex(index)).census+";"+G.networks.get(G.FindIndex(index)).generation+";"+G.networks.get(G.FindIndex(index)).bornedAt+";"+time+data);
-            Delete(G.Data,"Especie"+index, G.Dictionary,G.filepath);
-            G.networks.remove(G.FindIndex(index));
+            //Delete(G.Data,"Especie"+index, G.Dictionary,G.filepath);
+            //G.networks.remove(G.FindIndex(index));
+            G.networks.get(G.FindIndex(index)).Extinct = true;
         }
     }
 

@@ -9,8 +9,12 @@ import java.util.ArrayList;
 class Neural {
    ArrayList<float[][]> pesos= new ArrayList<>();
    ArrayList<float[]> umbrales= new ArrayList<>();
+   Rand rng ;
+   int Samples = 0;
+   boolean Extinct = false;
    ArraysManagement AC=new ArraysManagement();
    int[] ports;
+   float[] acum_error;
    int nlayers;
    int generation;
    int index;
@@ -19,6 +23,8 @@ class Neural {
    int census;
    int bornedAt;
    Neural(int[] ports,int index){
+       rng = new Rand();
+       acum_error = new float[12];
        this.index=index;
        this.population=1;
        this.bornedAt=0;
@@ -132,5 +138,35 @@ class Neural {
            geneLength+=(ports[i]+1)*ports[i+1];
        }
    return newNeural;
+   }
+   public void Sample(float[] limits){
+        this.Samples++;
+        float rng = (float) this.rng.Double(limits[0]);
+       float energy = (float) this.rng.Double(limits[1]);
+       float ufood = (float) this.rng.Double(limits[2]);
+       float nfood = (float) this.rng.Double(limits[3]);
+       float sfood = (float) this.rng.Double(limits[4]);
+       float wfood = (float) this.rng.Double(limits[5]);
+       float efood = (float) this.rng.Double(limits[6]);
+       float uneigh = (float) this.rng.Double(limits[7]);
+       float nneigh = (float) this.rng.Double(limits[8]);
+       float sneigh = (float) this.rng.Double(limits[9]);
+       float wneigh= (float) this.rng.Double(limits[10]);
+       float eneigh= (float) this.rng.Double(limits[11]);
+       float input[] = new float[]{rng,energy,ufood,nfood,sfood,wfood,efood,uneigh,nneigh,sneigh,wneigh,eneigh};
+       float input2[];
+       float output1[] = this.Compute(input,1);
+       float output2[];
+       float[] error;
+       for(int i=0;i<input.length;i++){
+           error = new float[input.length];
+           input2 = input;
+           input2[i] += 0.1f;
+           output2 = this.Compute(input2,1);
+           for(int j=0;j<output1.length;j++){
+               error[i] += Math.pow(output2[j]-output1[j],2);
+           }
+           acum_error[i] += (float) Math.sqrt(error[i]);
+       }
    }
 }
