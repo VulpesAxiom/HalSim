@@ -413,12 +413,22 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                             net.Sample(modelo.limits);
                             if(net.Samples >= modelo.maxSamples){
                                 Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
+                                String AcumError ="";
+                                for(int i=0;i<modelo.length;i++){
+                                    AcumError += net.acum_error[i];
+                                }
+                                StoreLine(modelo.filepath  + "Error.txt",net.index+AcumError);
                                 modelo.networks.remove(modelo.FindIndex(net.index));
                                 break;
                             }
                         }
                     }else if(net.Extinct){
                         Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
+                        String AcumError ="";
+                        for(int i=0;i<modelo.length;i++){
+                            AcumError += net.acum_error[i];
+                        }
+                        StoreLine(modelo.filepath  + "Error.txt",net.index+AcumError);
                         modelo.networks.remove(modelo.FindIndex(net.index));
                     }
                 }
@@ -438,6 +448,11 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                     net.Sample(modelo.limits);
                 }
                 Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
+                String AcumError ="";
+                for(int i=0;i<modelo.length;i++){
+                    AcumError += net.acum_error[i];
+                }
+                StoreLine(modelo.filepath  + "Error.txt",net.index+AcumError);
                 modelo.networks.remove(modelo.FindIndex(net.index));
             }
 
