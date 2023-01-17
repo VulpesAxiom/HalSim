@@ -299,7 +299,7 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
     }
 
     public static void main(String[] args) throws Exception {
-        Rand rng=new Rand(5984L);
+        Rand rng=new Rand(5135L);
         int iter = 1;
         while (iter < 2) {
             float MStrength;
@@ -416,7 +416,7 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                                 Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
                                 String AcumError ="";
                                 for(int i=0;i<modelo.limits.length;i++){
-                                    AcumError += net.acum_error[i];
+                                    AcumError += ";"+net.acum_error[i];
                                 }
                                 StoreLine(modelo.filepath  + "Error.txt",net.index+AcumError);
                                 modelo.networks.remove(modelo.FindIndex(net.index));
@@ -444,6 +444,10 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                 Delete2(modelo.Data, "Tiempo" + time);
                 ++time;
             }
+
+
+            modelo.Save("Saved", (1 + time / saveTime));
+
             for (int iterante = modelo.networks.size()-1;iterante >= 0; iterante--) {
                 Neural net =modelo.networks.get(iterante);
                 while (net.Samples < modelo.maxSamples){
@@ -451,14 +455,12 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                 }
                 Delete(modelo.Data,"Especie"+net.index, modelo.Dictionary,modelo.filepath);
                 String AcumError ="";
-                for(int i=0;i<modelo.length;i++){
+                for(int i=0;i<modelo.limits.length;i++){
                     AcumError += ";" +  net.acum_error[i];
                 }
                 StoreLine(modelo.filepath  + "Error.txt",net.index+AcumError);
                 modelo.networks.remove(modelo.FindIndex(net.index));
             }
-
-            modelo.Save("Saved", (1 + time / saveTime));
             while (modelo.Data.size() > 0) {
                 DataStorage data = modelo.Data.get(0);
                 String info = Collect(modelo.Data, data.ID, modelo.Dictionary);
