@@ -5,8 +5,11 @@ import HAL.Rand;
 
 import java.util.ArrayList;
 
+import static Exp.ModeloEvolutivo.StoreLine;
+
 
 class Neural {
+    int died;
    ArrayList<float[][]> pesos= new ArrayList<>();
    ArrayList<float[]> umbrales= new ArrayList<>();
    Rand rng ;
@@ -24,6 +27,7 @@ class Neural {
    int bornedAt;
    Neural(int[] ports,int index){
        rng = new Rand();
+       died= 0;
        acum_error = new float[12];
        this.index=index;
        this.population=1;
@@ -168,5 +172,6 @@ class Neural {
            }
            acum_error[i] += (float) Math.sqrt(error[i]);
        }
+
    }
 }
