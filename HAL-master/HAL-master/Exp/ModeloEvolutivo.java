@@ -297,72 +297,64 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
             }
         }
     }
+    public boolean CheckPop2(){
+        for (int i = 0; i < xDim; i++) {
+            for (int j = 0; j < yDim; j++) {
+                if(this.PopAt(i,j)>0){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     public static void main(String[] args) throws Exception {
-        Rand rng=new Rand(4814L);
+        Rand rng=new Rand(1234L);
         int iter = 0;
         int subiter=3;
         float MStrength=0;
-        float mutability=0;
+        float mutability=0.16f;
         int initialNumber=500;
-        int choose_initial_number=0;
         int choose_mutability=0;
-        int choose_foodmax=0;
-        boolean Age=false;
-        int MaxFood =20;
-        while (iter < 8 || subiter !=3 ) {
+        int choose_foodfreq=0;
+        boolean Suffocate=false;
+        int MaxFood =10;
+        float subFreq=.1f;
+        while (iter < 15 || subiter !=3 ) {
 
             if(subiter==3){
                 iter++;
                 subiter=0;
-                Age=rng.Bool();
+                Suffocate=rng.Bool();
                 choose_mutability=rng.Int(3);
                 switch (choose_mutability){
                     case 0:{
                         MStrength=1;
-                        mutability=0.04f;
                         break;
                     }
                     case 1:{
                         MStrength=10;
-                        mutability=0.08f;
                         break;
                     }
                     case 2:{
                         MStrength=100;
-                        mutability=0.16f;
                         break;
                     }
 
                 }
-                choose_initial_number=rng.Int(3);
-                switch (choose_initial_number){
-                    case 0:{
-                        initialNumber=500;
-                        break;
-                    }
-                    case 1:{
-                        initialNumber=250;
-                        break;
-                    }
-                    case 2:{
-                        initialNumber=125;
-                        break;
-                    }
 
-                }
-                choose_foodmax=rng.Int(3);
-                switch (choose_foodmax){
+                choose_foodfreq=rng.Int(3);
+                switch (choose_foodfreq){
                     case 0:{
-                        MaxFood=20;
+                        subFreq=.1f;
                         break;
                     }
                     case 1:{
-                        MaxFood=10;
+                        subFreq=.05f;
                         break;
                     }
                     case 2:{
-                        MaxFood=5;
+                        subFreq=.025f;
                         break;
                     }
 
@@ -382,7 +374,7 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
 
             int density = 1;
             int scale = 600 / Math.max(xDim, yDim);
-            int frequency = (int) ((.1f * xDim * yDim) / density);
+            int frequency = (int) ((subFreq * xDim * yDim) / density);
             GridWindow win = new GridWindow( xDim, yDim, scale);
             int initial = 10;
             int maxima = 10;
@@ -395,7 +387,7 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                 directory.mkdir();
             }
             StoreLine(modelo.filepath+"MetaData.txt",1+(iter-1)/20+";"+seed);
-            StoreLine(modelo.filepath+"Description.txt","Semilla:"+modelo.seed+", xDim:"+xDim+", yDim:"+yDim +",does Age:"+Age+", mutability index:"+choose_mutability+", Food_index:"+choose_foodmax+", initial number index:"+choose_initial_number );
+            StoreLine(modelo.filepath+"Description.txt","Semilla:"+modelo.seed+", xDim:"+xDim+", yDim:"+yDim +",does Suffocate:"+Suffocate+", mutability index:"+choose_mutability+", Food_index:"+choose_foodfreq);
             modelo.maximumFood = MaxFood;
             modelo.Dictionary.add("Random");
             modelo.Dictionary.add("Energy");
@@ -421,7 +413,7 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
             long second;
             modelo.active = 1;
 
-            while (modelo.networks.size() > 0 && (time < 10000)) {
+            while (modelo.CheckPop2() && (time < 10000)) {
                 modelo.Data.add(new DataStorage("Tiempo" + time));
                 second = ((System.currentTimeMillis() - starting) / 1000) % 60;
                 minute = ((System.currentTimeMillis() - starting) / 60000) % 60;
@@ -459,7 +451,7 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
                 float AverageFrequency =0;
                 int countOfCells = 0;
                 for (Celula cell : modelo) {
-                    cell.Step(time,Age);
+                    cell.Step(time,Suffocate);
                     countOfCells ++;
                     AverageFrequency += cell.mutability;
                     AverageStrength +=cell.strength;
@@ -538,13 +530,11 @@ public class ModeloEvolutivo extends AgentGrid2D<Celula> {
 class Celula extends AgentSQ2D<ModeloEvolutivo> {
     int index;
     int energy;
-    int age;
     float mutability, strength;
     int order;
     public void Init(int index, float mutability, float strength) {
         energy = 1;
         order=-1;
-        age=0;
         this.index = index;
         this.strength = strength;
         this.mutability = mutability;
@@ -559,7 +549,6 @@ class Celula extends AgentSQ2D<ModeloEvolutivo> {
 
     public void Step(int time,boolean Age) {
 
-        this.age++;
         assert G != null;
         int bound = 10;
         float rng = (float) G.rng.Int(bound);
@@ -677,7 +666,7 @@ class Celula extends AgentSQ2D<ModeloEvolutivo> {
         if (this.energy < 0) {
             this.energy = 0;
         }
-        if (action == 1) {
+        if (action == 1 ||(Age && thidneigh>5)) {
             Die(time);
         }
         if (this.energy < G.maxima) {
@@ -690,10 +679,6 @@ class Celula extends AgentSQ2D<ModeloEvolutivo> {
                 G.food[G.ItoX(Isq())][G.ItoY(Isq())] = 0;
             }
         }
-        if(this.age==20 && Age){
-            Die(time);
-        }
-
     }
     public void Die(int time) {
         assert G != null;
