@@ -5,7 +5,7 @@ import HAL.Rand;
 
 import java.util.ArrayList;
 
-import static Exp.ModeloEvolutivo.StoreLine;
+import static Exp.EvolutionModel.StoreLine;
 
 
 class Neural {
@@ -48,14 +48,7 @@ class Neural {
        }
 
    }
-   public void Print(){
-       for (int layer = 0; layer < nlayers; layer++) {
-           System.out.println("Pesos de la capa "+(layer+1)+":");
-           AC.Print(pesos.get(layer));
-           System.out.println("Umbrales de la capa "+(layer+1)+":");
-           AC.Print(umbrales.get(layer));
-       }
-   }
+
 
     public void Randomize(long seed){
        Rand rng=new Rand(seed);
@@ -67,38 +60,6 @@ class Neural {
                 this.umbrales.get(layer)[row] = (float) rng.Double( 200)-100;
             }
         }
-    }
-    public float TestDiameter(float[] originalInput,int minInput,int maxInput,int inputIndex){
-        float[] originalOutput=this.Compute(originalInput,1);
-        float[] newOutput;
-        int newIndex;
-        int index= AC.getIndexOfLargest(originalOutput);
-        if(originalOutput[index]<=0){
-            index=-1;
-        }
-        int a=0,b=0;
-        boolean cond=true;
-        while(originalInput[inputIndex]-a>minInput && cond){
-            originalInput[inputIndex]=originalInput[inputIndex]-a-1;
-            newOutput=this.Compute(originalInput,1);
-            newIndex=AC.getIndexOfLargest(newOutput);
-            cond=false;
-            if((index <0 && newOutput[newIndex]<0) || newIndex==index){
-                cond=true;
-                a++;
-            }
-        }
-        while(originalInput[inputIndex]+b<maxInput && cond){
-            originalInput[inputIndex]=originalInput[inputIndex]+b+1;
-            newOutput=this.Compute(originalInput,1);
-            newIndex=AC.getIndexOfLargest(newOutput);
-            cond=false;
-            if((index <0 && newOutput[newIndex]<0) || newIndex==index){
-                cond=true;
-                b++;
-            }
-        }
-        return ((float) b+a+1);
     }
 
    public float[] Compute(float[] input,int layer){
@@ -143,9 +104,16 @@ class Neural {
        }
    return newNeural;
    }
-   public void Sample(float[] limits){
-        this.Samples++;
-        float rng = (float) this.rng.Double(limits[0]);
+    public void StoreSample(float[] limits,String filepath){
+        StringBuilder AcumError = new StringBuilder();
+        for(int i=0;i<limits.length;i++){
+            AcumError.append(";").append(this.acum_error[i]);
+        }
+        StoreLine(filepath  + "Error.txt",this.index+";"+this.parentIndex+";"+this.bornedAt+";"+this.died+AcumError);
+    }
+   public void Sample(float[] limits) {
+       this.Samples++;
+       float rng = (float) this.rng.Double(limits[0]);
        float energy = (float) this.rng.Double(limits[1]);
        float ufood = (float) this.rng.Double(limits[2]);
        float nfood = (float) this.rng.Double(limits[3]);
@@ -155,20 +123,20 @@ class Neural {
        float uneigh = (float) this.rng.Double(limits[7]);
        float nneigh = (float) this.rng.Double(limits[8]);
        float sneigh = (float) this.rng.Double(limits[9]);
-       float wneigh= (float) this.rng.Double(limits[10]);
-       float eneigh= (float) this.rng.Double(limits[11]);
-       float input[] = new float[]{rng,energy,ufood,nfood,sfood,wfood,efood,uneigh,nneigh,sneigh,wneigh,eneigh};
-       float input2[];
-       float output1[] = this.Compute(input,1);
-       float output2[];
+       float wneigh = (float) this.rng.Double(limits[10]);
+       float eneigh = (float) this.rng.Double(limits[11]);
+       float[] input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh};
+       float[] input2;
+       float[] output1 = this.Compute(input, 1);
+       float[] output2;
        float[] error;
-       for(int i=0;i<input.length;i++){
+       for (int i = 0; i < input.length; i++) {
            error = new float[input.length];
            input2 = input;
            input2[i] += 0.1f;
-           output2 = this.Compute(input2,1);
-           for(int j=0;j<output1.length;j++){
-               error[i] += Math.pow(output2[j]-output1[j],2);
+           output2 = this.Compute(input2, 1);
+           for (int j = 0; j < output1.length; j++) {
+               error[i] += Math.pow(output2[j] - output1[j], 2);
            }
            acum_error[i] += (float) Math.sqrt(error[i]);
        }
