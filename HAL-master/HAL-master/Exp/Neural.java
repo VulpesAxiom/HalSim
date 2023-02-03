@@ -28,7 +28,7 @@ class Neural {
    Neural(int[] ports,int index){
        rng = new Rand();
        died= 0;
-       acum_error = new float[12];
+       acum_error = new float[ports[0]];
        this.index=index;
        this.population=1;
        this.bornedAt=0;
@@ -125,7 +125,12 @@ class Neural {
        float sneigh = (float) this.rng.Double(limits[9]);
        float wneigh = (float) this.rng.Double(limits[10]);
        float eneigh = (float) this.rng.Double(limits[11]);
-       float[] input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh};
+       float usig = (float) this.rng.Double(limits[12]);
+       float nsig = (float) this.rng.Double(limits[13]);
+       float ssig = (float) this.rng.Double(limits[14]);
+       float wsig = (float) this.rng.Double(limits[15]);
+       float esig = (float) this.rng.Double(limits[16]);
+       float[] input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh, usig, nsig, ssig, wsig, esig};
        float[] input2;
        float[] output1 = this.Compute(input, 1);
        float[] output2;

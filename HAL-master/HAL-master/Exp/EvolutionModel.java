@@ -32,6 +32,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     int maxIndex;
     int[][] food;
     int[][] neighborhood;
+    int[][] signal;
 
     public int FindIndex(int index) {
         for (int i = 0; i < networks.size(); i++) {
@@ -47,12 +48,13 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         super(x, y, Celula.class, true, true);
         this.seed=seed;
         rng=new Rand(seed);
-        limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5};
+        limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
         maxSamples = 5000;
         filepath = "C:\\Users\\bast_\\OneDrive\\Escritorio\\HalSim\\OutPutFile\\"+iteration+"/";
 
         food = new int[xDim][yDim];
         neighborhood = new int[xDim][yDim];
+        signal = new int[xDim][yDim];
         AC.ConstantThis(food, initial);
         this.maxInnerEnergy = maxInnerEnergy;
     }
@@ -259,8 +261,8 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     }
 
     public static void main(String[] args) throws Exception {
-        Rand rng=new Rand(1248L);
-        int iteration = 1;
+        Rand rng=new Rand(75648L);
+        int iteration = 16;
         float MStrength=10;
         float mutability=0.16f;
         int initialNumber=250;
@@ -268,14 +270,14 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         float subFreq=.05f;
 
 
-        while (iteration < 15 ) {
+        while (iteration <= 30 ) {
 
             int time = 0;
             int xDim=200 , yDim=200;
             int BeginnerBoost=5;
             int[] architecture;
             int density = 1;
-            int scale = 600 / Math.max(xDim, yDim);
+            //int scale = 600 / Math.max(xDim, yDim);
             int frequency = (int) ((subFreq * xDim * yDim) / density);
             //GridWindow win = new GridWindow( xDim, yDim, scale);
             int initial = 10;
@@ -304,8 +306,13 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             model.Dictionary.add("SouthNeigh");
             model.Dictionary.add("WestNeigh");
             model.Dictionary.add("EastNeigh");
+            model.Dictionary.add("UnderSignal");
+            model.Dictionary.add("NorthSignal");
+            model.Dictionary.add("SouthSignal");
+            model.Dictionary.add("WestSignal");
+            model.Dictionary.add("EastSignal");
 
-            architecture=new int[]{model.Dictionary.size(),25,7};
+            architecture=new int[]{model.Dictionary.size(),25,8};
 
             model.Setup(initialNumber,BeginnerBoost,MStrength,architecture,mutability);
             model.CheckPop();
@@ -409,12 +416,17 @@ class Celula extends AgentSQ2D<EvolutionModel> {
         int downneigh= G.neighborhood[thisx][down];
         int leftneigh= G.neighborhood[left][thisy];
         int rightneigh= G.neighborhood[right][thisy];
+        int upsignal= G.signal[thisx][up];
+        int thidsignal= G.signal[thisx][thisy];
+        int downsignal= G.signal[thisx][down];
+        int leftsignal= G.signal[left][thisy];
+        int rightsignal= G.signal[right][thisy];
         int upfood=G.food[thisx][up];
         int leftfood=G.food[left][thisy];
         int rightfood=G.food[right][thisy];
         int downfood=G.food[thisx][down];
         int thisfood=G.food[thisx][thisy];
-        float[] input = new float[]{rng, this.energy,thisfood,upfood,downfood,rightfood,leftfood,thidneigh,upneigh,downneigh,rightneigh,leftneigh,1};
+        float[] input = new float[]{rng, this.energy,thisfood,upfood,downfood,rightfood,leftfood,thidneigh,upneigh,downneigh,rightneigh,leftneigh,thidsignal,upsignal,downsignal,rightsignal,leftsignal};
 
 
 
@@ -427,6 +439,11 @@ class Celula extends AgentSQ2D<EvolutionModel> {
         if (output[responce] < 0) {
             responce = 3;
         }
+        G.signal[thisx][thisy]= (int) output[7];
+        G.signal[left][thisy]= (int) output[7];
+        G.signal[right][thisy]= (int) output[7];
+        G.signal[thisx][up]= (int) output[7];
+        G.signal[thisx][down]= (int) output[7];
         int action = responce;
         this.energy--;
         if (this.energy < 0) {
