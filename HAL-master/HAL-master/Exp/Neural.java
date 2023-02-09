@@ -83,8 +83,8 @@ class Neural {
        int mutatedGene=rng.Int(geneLength)+1;
        for (int layer = 0; layer < nlayers; layer++) {
            for (int row = 0; row < ports[layer+1]; row++) {
-               if (ports[layer] >= 0) {
-                   System.arraycopy(this.pesos.get(layer)[row], 0, newNeural.pesos.get(layer)[row], 0, ports[nlayers]);
+               for(int col=0;col<ports[layer];col++){
+                   newNeural.pesos.get(layer)[row][col]=this.pesos.get(layer)[row][col];
                }
                newNeural.umbrales.get(layer)[row]=this.umbrales.get(layer)[row];
            }
@@ -104,6 +104,12 @@ class Neural {
        }
    return newNeural;
    }
+   public void Print(){
+       for (int i = 0; i < nlayers; i++) {
+           AC.Print(this.pesos.get(i));
+           AC.Print(this.umbrales.get(i));
+       }
+    }
     public void StoreSample(float[] limits,String filepath){
         StringBuilder AcumError = new StringBuilder();
         for(int i=0;i<limits.length;i++){
@@ -125,12 +131,13 @@ class Neural {
        float sneigh = (float) this.rng.Double(limits[9]);
        float wneigh = (float) this.rng.Double(limits[10]);
        float eneigh = (float) this.rng.Double(limits[11]);
-       float usig = (float) this.rng.Double(limits[12]);
-       float nsig = (float) this.rng.Double(limits[13]);
-       float ssig = (float) this.rng.Double(limits[14]);
-       float wsig = (float) this.rng.Double(limits[15]);
-       float esig = (float) this.rng.Double(limits[16]);
-       float[] input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh, usig, nsig, ssig, wsig, esig};
+       //float usig = (float) this.rng.Double(limits[12]);
+       //float nsig = (float) this.rng.Double(limits[13]);
+       //float ssig = (float) this.rng.Double(limits[14]);
+       //float wsig = (float) this.rng.Double(limits[15]);
+       //float esig = (float) this.rng.Double(limits[16]);
+       //float[] input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh, usig, nsig, ssig, wsig, esig};
+       float[] input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh};
        float[] input2;
        float[] output1 = this.Compute(input, 1);
        float[] output2;
@@ -138,7 +145,7 @@ class Neural {
        for (int i = 0; i < input.length; i++) {
            error = new float[input.length];
            input2 = input;
-           input2[i] += 0.1f;
+           input2[i] += limits[i]*0.01f;
            output2 = this.Compute(input2, 1);
            for (int j = 0; j < output1.length; j++) {
                error[i] += Math.pow(output2[j] - output1[j], 2);

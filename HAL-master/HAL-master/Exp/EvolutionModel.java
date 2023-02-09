@@ -47,8 +47,9 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     public EvolutionModel(int x, int y, int initial, int maxInnerEnergy, int iteration, long seed) {
         super(x, y, Celula.class, true, true);
         this.seed=seed;
-        rng=new Rand(seed);
-        limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
+        rng=new Rand(this.seed);
+        //limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
+        limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5};
         maxSamples = 5000;
         filepath = "C:\\Users\\bast_\\OneDrive\\Escritorio\\HalSim\\OutPutFile\\"+iteration+"/";
 
@@ -221,6 +222,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                 if(rng.Double()<((float)frequency)/(xDim*yDim)*Math.exp(-Math.pow(((float)sum/(maximumFood)-2.5f),2))) {
                     food[x][y] = Math.min((food[x][y] + amount), maximumFood);
                 }
+                signal[x][y]=0;
             }
         }
     }
@@ -234,9 +236,14 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
 
             if (GetAgent(i) != null) {
                 float colorcito=((float) FindIndex(GetAgent(i).index)) / networks.size();
+
                 win.SetPix(i, Util.RGB(colorcito, colorcito, 1));
             } else {
-                win.SetPix(i, Util.RGB(c, c, 0));
+                if(signal[x][y]==1) {
+                    win.SetPix(i, Util.RGB(1, 0, 0));
+                }else{
+                    win.SetPix(i, Util.RGB(c, c, 0));
+                }
             }
         }
     }
@@ -261,8 +268,8 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     }
 
     public static void main(String[] args) throws Exception {
-        Rand rng=new Rand(75648L);
-        int iteration = 16;
+        Rand rng=new Rand(798L);
+        int iteration =101;
         float MStrength=10;
         float mutability=0.16f;
         int initialNumber=250;
@@ -270,16 +277,16 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         float subFreq=.05f;
 
 
-        while (iteration <= 30 ) {
+        while (iteration <= 101 ) {
 
             int time = 0;
             int xDim=200 , yDim=200;
             int BeginnerBoost=5;
             int[] architecture;
             int density = 1;
-            //int scale = 600 / Math.max(xDim, yDim);
+            int scale = 600 / Math.max(xDim, yDim);
             int frequency = (int) ((subFreq * xDim * yDim) / density);
-            //GridWindow win = new GridWindow( xDim, yDim, scale);
+            GridWindow win = new GridWindow( xDim, yDim, scale);
             int initial = 10;
             int maxima = 10;
             long seed= rng.Long(10000);
@@ -306,13 +313,13 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             model.Dictionary.add("SouthNeigh");
             model.Dictionary.add("WestNeigh");
             model.Dictionary.add("EastNeigh");
-            model.Dictionary.add("UnderSignal");
-            model.Dictionary.add("NorthSignal");
-            model.Dictionary.add("SouthSignal");
-            model.Dictionary.add("WestSignal");
-            model.Dictionary.add("EastSignal");
+            //model.Dictionary.add("UnderSignal");
+            //model.Dictionary.add("NorthSignal");
+            //model.Dictionary.add("SouthSignal");
+            //model.Dictionary.add("WestSignal");
+            //model.Dictionary.add("EastSignal");
 
-            architecture=new int[]{model.Dictionary.size(),25,8};
+            architecture=new int[]{model.Dictionary.size(),25,7};
 
             model.Setup(initialNumber,BeginnerBoost,MStrength,architecture,mutability);
             model.CheckPop();
@@ -351,8 +358,8 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                 }
 
                 model.Feed(density,frequency);
-                //model.Draw(win, model.maximumFood);
-                //win.TickPause(0);
+                model.Draw(win, model.maximumFood);
+                win.TickPause(0);
                 System.out.println(hour + ":" + minute + ":" + second + "  ;" + time+ "  ;" + model.Pop());
                 ++time;
             }
@@ -367,6 +374,9 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                     net.Sample(model.limits);
                 }
                 net.StoreSample(model.limits, model.filepath);
+                if(model.networks.size()==1){
+                    model.networks.get(0).Print();
+                }
                 model.networks.remove(model.FindIndex(net.index));
             }
 
@@ -416,18 +426,18 @@ class Celula extends AgentSQ2D<EvolutionModel> {
         int downneigh= G.neighborhood[thisx][down];
         int leftneigh= G.neighborhood[left][thisy];
         int rightneigh= G.neighborhood[right][thisy];
-        int upsignal= G.signal[thisx][up];
-        int thidsignal= G.signal[thisx][thisy];
-        int downsignal= G.signal[thisx][down];
-        int leftsignal= G.signal[left][thisy];
-        int rightsignal= G.signal[right][thisy];
+        //int upsignal= G.signal[thisx][up];
+        //int thidsignal= G.signal[thisx][thisy];
+        //int downsignal= G.signal[thisx][down];
+        //int leftsignal= G.signal[left][thisy];
+        //int rightsignal= G.signal[right][thisy];
         int upfood=G.food[thisx][up];
         int leftfood=G.food[left][thisy];
         int rightfood=G.food[right][thisy];
         int downfood=G.food[thisx][down];
         int thisfood=G.food[thisx][thisy];
-        float[] input = new float[]{rng, this.energy,thisfood,upfood,downfood,rightfood,leftfood,thidneigh,upneigh,downneigh,rightneigh,leftneigh,thidsignal,upsignal,downsignal,rightsignal,leftsignal};
-
+        //float[] input = new float[]{rng, this.energy,thisfood,upfood,downfood,rightfood,leftfood,thidneigh,upneigh,downneigh,rightneigh,leftneigh,thidsignal,upsignal,downsignal,rightsignal,leftsignal};
+        float[] input = new float[]{rng, this.energy,thisfood,upfood,downfood,rightfood,leftfood,thidneigh,upneigh,downneigh,rightneigh,leftneigh};
 
 
         float[] output = G.networks.get(G.FindIndex(index)).Compute(input, 1);
@@ -439,11 +449,11 @@ class Celula extends AgentSQ2D<EvolutionModel> {
         if (output[responce] < 0) {
             responce = 3;
         }
-        G.signal[thisx][thisy]= (int) output[7];
-        G.signal[left][thisy]= (int) output[7];
-        G.signal[right][thisy]= (int) output[7];
-        G.signal[thisx][up]= (int) output[7];
-        G.signal[thisx][down]= (int) output[7];
+        //G.signal[thisx][thisy]= (int) output[7];
+        //G.signal[left][thisy]= (int) output[7];
+        //G.signal[right][thisy]= (int) output[7];
+        //G.signal[thisx][up]= (int) output[7];
+        //G.signal[thisx][down]= (int) output[7];
         int action = responce;
         this.energy--;
         if (this.energy < 0) {
