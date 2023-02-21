@@ -60,6 +60,25 @@ public class ArraysManagement implements Serializable {
         }
         return output;
     }
+    public float[] Divide(float[] input, float factor) {
+        return Scale(input,1/factor);
+    }
+    public float[] Scale(float[]input,float factor){
+        for(int i=0;i< input.length;i++){
+            input[i]*=factor;
+        }
+        return input;
+    }
+    public String ToString(float[] vector){
+        StringBuilder output= new StringBuilder();
+        for (int i = 0; i < vector.length; i++) {
+            if(i!=0){
+                output.append(";");
+            }
+            output.append(vector[i]);
+        }
+        return output.toString();
+    }
 
     public float[] Subtract(float[] first, float[] second) {
         float[] output = new float[first.length];
