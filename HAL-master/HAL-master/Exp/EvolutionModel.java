@@ -36,7 +36,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     int[][] neighborhood;
     int[][] signal,signal_buffer;
 
-    boolean special_comms;
+    boolean special_comms,extended;
 
     public int FindIndex(int index) {
         for (int i = 0; i < networks.size(); i++) {
@@ -48,16 +48,20 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         return -1;
     }
 
-    public EvolutionModel(int x, int y, int initial, int maxInnerEnergy, int iteration, long seed,boolean communicates,boolean retrieve,boolean special_comms) throws FileNotFoundException {
+    public EvolutionModel(int x, int y, int initial, int maxInnerEnergy, int iteration, long seed,boolean communicates,boolean retrieve,boolean special_comms,boolean extended) throws FileNotFoundException {
         super(x, y, Celula.class, true, true);
         this.seed=seed;
         movement=new float[6];
         activity=new float[15];
+        this.extended=extended;
         signaled_moved=0;
         this.special_comms=special_comms;
         if(communicates) {
-            limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
-
+            if(extended){
+                limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
+            }else {
+                limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
+            }
         }else {
             limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5};
         }
@@ -299,18 +303,21 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     }
 
     public static void main(String[] args) throws Exception {
-        Rand rng=new Rand(745861L);
-        int iteration =61,last_iteration=90;
+        Rand rng=new Rand(7451L);
+        int iteration =91,last_iteration=105;
         float MStrength=10;
         float mutability=0.16f;
         int initialNumber=250;
         boolean Suffocate=true;
         float subFreq=.05f;
         int Duration=10000;
-        boolean to_draw=false,communicates=true,retrieve=false,signal_resistance=true,repeat_seed=false;
+        boolean to_draw=false,communicates=true,retrieve=false,signal_resistance=true,repeat_seed=false,extended =true;
 
 
         while (iteration <= last_iteration ) {
+            if(extended){
+                communicates=true;
+            }
             signal_resistance=!signal_resistance;
             int time = 0;
             int Pop;
@@ -334,7 +341,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             }else {
                 seed = rng.Long(1000);
             }
-            EvolutionModel model = new EvolutionModel(xDim, yDim, initial, maxima,iteration,seed,communicates,retrieve,signal_resistance);
+            EvolutionModel model = new EvolutionModel(xDim, yDim, initial, maxima,iteration,seed,communicates,retrieve,signal_resistance,extended);
             File directory = new File(model.filepath);
             if (! directory.exists()){
                 boolean done=false;
@@ -359,6 +366,16 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             model.Dictionary.add("WestNeigh");
             model.Dictionary.add("EastNeigh");
             if(communicates) {
+                if(extended){
+                    model.Dictionary.add("ExNorthNeigh");
+                    model.Dictionary.add("ExSouthNeigh");
+                    model.Dictionary.add("ExWestNeigh");
+                    model.Dictionary.add("ExEastNeigh");
+                    model.Dictionary.add("Diagonal1");
+                    model.Dictionary.add("Diagonal2");
+                    model.Dictionary.add("Diagonal3");
+                    model.Dictionary.add("Diagonal3");
+                }
                 model.Dictionary.add("UnderSignal");
                 model.Dictionary.add("NorthSignal");
                 model.Dictionary.add("SouthSignal");
@@ -393,7 +410,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                         Neural net = model.networks.get(iterante);
                         if (net.Extinct && net.Samples < model.maxSamples) {
                             for (int contador = 0; contador < 10; contador++) {
-                                net.Sample(model.limits, model.communicate);
+                                net.Sample(model.limits, model.communicate,model.extended);
                                 if (net.Samples >= model.maxSamples) {
                                     if (!retrieve) {
                                         net.StoreSample(model.limits, model.filepath);
@@ -448,7 +465,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                 for (int iterante = model.networks.size() - 1; iterante >= 0; iterante--) {
                     Neural net = model.networks.get(iterante);
                     while (net.Samples < model.maxSamples) {
-                        net.Sample(model.limits, model.communicate);
+                        net.Sample(model.limits, model.communicate,model.extended);
                     }
 
                     net.StoreSample(model.limits, model.filepath);
@@ -499,6 +516,7 @@ class Celula extends AgentSQ2D<EvolutionModel> {
         int thisy=G.ItoY(this.Isq());
         int left=(Math.floorMod((G.ItoX(this.Isq())-1),G.xDim));
         int right=(Math.floorMod((G.ItoX(this.Isq())+1),G.xDim));
+
         int upneigh= G.neighborhood[thisx][up];
         int thidneigh= G.neighborhood[thisx][thisy];
         int downneigh= G.neighborhood[thisx][down];
@@ -531,15 +549,30 @@ class Celula extends AgentSQ2D<EvolutionModel> {
                 this.any_signal=true;
                 G.signaled_moved++;
             }
-            input = new float[]{rng, this.energy,thisfood,upfood,downfood,rightfood,leftfood,thidneigh,upneigh,downneigh,rightneigh,leftneigh,thidsignal,upsignal,downsignal,rightsignal,leftsignal};
-
+            if(G.communicate){
+                int exup = Math.floorMod(G.ItoY(this.Isq()) - 2, G.yDim);
+                int exdown = Math.floorMod((G.ItoY(this.Isq()) + 2), G.yDim);
+                int exleft = (Math.floorMod((G.ItoX(this.Isq()) - 2), G.xDim));
+                int exright = (Math.floorMod((G.ItoX(this.Isq()) + 2), G.xDim));
+                int exupneigh= G.neighborhood[thisx][exup];
+                int exdownneigh= G.neighborhood[thisx][exdown];
+                int exleftneigh= G.neighborhood[exleft][thisy];
+                int exrightneigh= G.neighborhood[exright][thisy];
+                int diagonal1= G.neighborhood[right][up];
+                int diagonal2= G.neighborhood[left][down];
+                int diagonal3= G.neighborhood[left][up];
+                int diagonal4= G.neighborhood[right][down];
+                input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh, thidsignal,exupneigh,exdownneigh,exrightneigh,exleftneigh,diagonal1,diagonal2,diagonal3,diagonal4, upsignal, downsignal, rightsignal, leftsignal};
+            }else {
+                input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh, thidsignal, upsignal, downsignal, rightsignal, leftsignal};
+            }
         }else {
             input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh};
         }
 
         float[] output = G.networks.get(G.FindIndex(index)).Compute(input, 1);
         if(G.networks.get(G.FindIndex(index)).Samples < G.maxSamples && !G.retrieve) {
-            G.networks.get(G.FindIndex(index)).Sample(G.limits,G.communicate);
+            G.networks.get(G.FindIndex(index)).Sample(G.limits,G.communicate,G.extended);
         }
         int responce = G.AC.getIndexOfLargest(output);
         if (output[responce] < 0) {

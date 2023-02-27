@@ -117,7 +117,7 @@ class Neural {
         }
         StoreLine(filepath  + "Error.txt",this.index+";"+this.parentIndex+";"+this.bornedAt+";"+this.died+AcumError);
     }
-   public void Sample(float[] limits,boolean communicate) {
+   public void Sample(float[] limits,boolean communicate,boolean extended) {
        this.Samples++;
        float rng = (float) this.rng.Double(limits[0]);
        float energy = (float) this.rng.Double(limits[1]);
@@ -133,12 +133,30 @@ class Neural {
        float eneigh = (float) this.rng.Double(limits[11]);
        float[] input;
        if(communicate) {
-           float usig = (float) this.rng.Double(limits[12]);
-           float nsig = (float) this.rng.Double(limits[13]);
-           float ssig = (float) this.rng.Double(limits[14]);
-           float wsig = (float) this.rng.Double(limits[15]);
-           float esig = (float) this.rng.Double(limits[16]);
-           input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh, usig, nsig, ssig, wsig, esig};
+           if(extended){
+               float exnneigh = (float) this.rng.Double(limits[12]);
+               float exsneigh = (float) this.rng.Double(limits[13]);
+               float exwneigh = (float) this.rng.Double(limits[14]);
+               float exeneigh = (float) this.rng.Double(limits[15]);
+               float dia1 = (float) this.rng.Double(limits[16]);
+               float dia2 = (float) this.rng.Double(limits[17]);
+               float dia3 = (float) this.rng.Double(limits[18]);
+               float dia4 = (float) this.rng.Double(limits[19]);
+               float usig = (float) this.rng.Double(limits[20]);
+               float nsig = (float) this.rng.Double(limits[21]);
+               float ssig = (float) this.rng.Double(limits[22]);
+               float wsig = (float) this.rng.Double(limits[23]);
+               float esig = (float) this.rng.Double(limits[24]);
+               input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh,exnneigh,exsneigh,exwneigh,exeneigh,dia1,dia2,dia3,dia4, usig, nsig, ssig, wsig, esig};
+
+           }else {
+               float usig = (float) this.rng.Double(limits[12]);
+               float nsig = (float) this.rng.Double(limits[13]);
+               float ssig = (float) this.rng.Double(limits[14]);
+               float wsig = (float) this.rng.Double(limits[15]);
+               float esig = (float) this.rng.Double(limits[16]);
+               input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh, usig, nsig, ssig, wsig, esig};
+           }
        }else {
            input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh};
        }float[] input2;
