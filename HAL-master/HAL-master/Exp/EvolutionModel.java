@@ -30,11 +30,11 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     ArrayList<String> Dictionary = new ArrayList<>();
 
     ArraysManagement AC = new ArraysManagement();
-    int maxIndex,signaled_moved;
+    int maxIndex,signaled_moved,number_of_layers;
     int[][] food;
     float[] movement,activity;
     int[][] neighborhood;
-    int[][] signal,signal_buffer;
+    int[][][] signal,signal_buffer;
 
     boolean special_comms,extended;
 
@@ -48,19 +48,24 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         return -1;
     }
 
-    public EvolutionModel(int x, int y, int initial, int maxInnerEnergy, int iteration, long seed,boolean communicates,boolean retrieve,boolean special_comms,boolean extended) throws FileNotFoundException {
+    public EvolutionModel(int x, int y, int initial, int maxInnerEnergy, int iteration, long seed,boolean communicates,boolean retrieve,boolean special_comms,boolean extended,int number_of_layers) throws FileNotFoundException {
         super(x, y, Celula.class, true, true);
         this.seed=seed;
         movement=new float[6];
         activity=new float[15];
         this.extended=extended;
+        this.number_of_layers=number_of_layers;
         signaled_moved=0;
         this.special_comms=special_comms;
         if(communicates) {
             if(extended){
                 limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
             }else {
-                limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
+                if(number_of_layers==2){
+                    limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+                }else {
+                    limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
+                }
             }
         }else {
             limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5};
@@ -85,8 +90,8 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         rng=new Rand(this.seed);
         food = new int[xDim][yDim];
         neighborhood = new int[xDim][yDim];
-        signal = new int[xDim][yDim];
-        signal_buffer= new int[xDim][yDim];
+        signal = new int[xDim][yDim][number_of_layers];
+        signal_buffer= new int[xDim][yDim][number_of_layers];
         AC.ConstantThis(food, initial);
         this.maxInnerEnergy = maxInnerEnergy;
     }
@@ -255,9 +260,15 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                     food[x][y] = Math.min((food[x][y] + amount), maximumFood);
                 }
                 if(special_comms){
-                    signal_buffer[x][y]=signal[x][y];
+                    signal_buffer[x][y][0]=signal[x][y][0];
                 }
-                signal[x][y]=0;
+                signal[x][y][0]=0;
+                for (int i = 1; i <number_of_layers ; i++) {
+                    if(special_comms){
+                        signal_buffer[x][y][i]=signal[x][y][i];
+                    }
+                    signal[x][y][i]=0;
+                }
             }
         }
     }
@@ -274,7 +285,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
 
                 win.SetPix(i, Util.RGB(colorcito, colorcito, 1));
             } else {
-                if(signal[x][y]+signal_buffer[x][y]>0) {
+                if(signal[x][y][0]+signal_buffer[x][y][0]>0) {
                     win.SetPix(i, Util.RGB(1, 0, 0));
                 }else{
                     win.SetPix(i, Util.RGB(c, c, 0));
@@ -303,15 +314,16 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     }
 
     public static void main(String[] args) throws Exception {
-        Rand rng=new Rand(7451L);
-        int iteration =91,last_iteration=105;
+        Rand rng=new Rand(131175L);
+        int iteration =121,last_iteration=136;
         float MStrength=10;
         float mutability=0.16f;
         int initialNumber=250;
         boolean Suffocate=true;
         float subFreq=.05f;
         int Duration=10000;
-        boolean to_draw=false,communicates=true,retrieve=false,signal_resistance=true,repeat_seed=false,extended =true;
+        boolean to_draw=false,communicates=true,retrieve=false,signal_resistance=true,repeat_seed=false,extended =false;
+        int number_of_layers=2;
 
 
         while (iteration <= last_iteration ) {
@@ -341,7 +353,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             }else {
                 seed = rng.Long(1000);
             }
-            EvolutionModel model = new EvolutionModel(xDim, yDim, initial, maxima,iteration,seed,communicates,retrieve,signal_resistance,extended);
+            EvolutionModel model = new EvolutionModel(xDim, yDim, initial, maxima,iteration,seed,communicates,retrieve,signal_resistance,extended,number_of_layers);
             File directory = new File(model.filepath);
             if (! directory.exists()){
                 boolean done=false;
@@ -381,7 +393,14 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                 model.Dictionary.add("SouthSignal");
                 model.Dictionary.add("WestSignal");
                 model.Dictionary.add("EastSignal");
-                architecture=new int[]{model.Dictionary.size(),25,8};
+                for(int j=1;j < number_of_layers;j++){
+                    model.Dictionary.add("UnderSignal"+j+1);
+                    model.Dictionary.add("NorthSignal"+j+1);
+                    model.Dictionary.add("SouthSignal"+j+1);
+                    model.Dictionary.add("WestSignal"+j+1);
+                    model.Dictionary.add("EastSignal"+j+1);
+                }
+                architecture=new int[]{model.Dictionary.size(),25,7 +number_of_layers};
             }else {
                 architecture = new int[]{model.Dictionary.size(), 25, 7};
             }
@@ -410,7 +429,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                         Neural net = model.networks.get(iterante);
                         if (net.Extinct && net.Samples < model.maxSamples) {
                             for (int contador = 0; contador < 10; contador++) {
-                                net.Sample(model.limits, model.communicate,model.extended);
+                                net.Sample(model.limits, model.communicate,model.extended, model.number_of_layers);
                                 if (net.Samples >= model.maxSamples) {
                                     if (!retrieve) {
                                         net.StoreSample(model.limits, model.filepath);
@@ -438,7 +457,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
 
 
                 System.out.println(hour + ":" + minute + ":" + second + "  ;" + time+ "  ;" +Pop);
-                StoreLine(model.filepath+"Population.txt",time+";"+Pop);
+                StoreLine(model.filepath+"Populations.txt",time+";"+Pop+";"+ model.signaled_moved+";"+(Pop-model.signaled_moved));
                 model.movement[0] /=Pop;
                 model.movement[1] /=Pop;
                 model.movement[2] /= model.signaled_moved;
@@ -465,7 +484,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                 for (int iterante = model.networks.size() - 1; iterante >= 0; iterante--) {
                     Neural net = model.networks.get(iterante);
                     while (net.Samples < model.maxSamples) {
-                        net.Sample(model.limits, model.communicate,model.extended);
+                        net.Sample(model.limits, model.communicate,model.extended,model.number_of_layers);
                     }
 
                     net.StoreSample(model.limits, model.filepath);
@@ -528,28 +547,46 @@ class Celula extends AgentSQ2D<EvolutionModel> {
         int rightfood=G.food[right][thisy];
         int downfood=G.food[thisx][down];
         int thisfood=G.food[thisx][thisy];
+            int upsignal2=0;
+            int thidsignal2=0;
+            int downsignal2=0;
+            int leftsignal2=0;
+            int rightsignal2=0;
         float[] input;
         this.any_signal=false;
         if(G.communicate) {
             int upsignal,thidsignal,downsignal,leftsignal,rightsignal;
             if(G.special_comms){
-                upsignal = Math.max(G.signal[thisx][up],G.signal_buffer[thisx][up]);
-                thidsignal = Math.max(G.signal[thisx][thisy],G.signal_buffer[thisx][thisy]);
-                downsignal = Math.max(G.signal[thisx][down],G.signal_buffer[thisx][down]);
-                leftsignal = Math.max(G.signal[left][thisy],G.signal_buffer[left][thisy]);
-                rightsignal = Math.max(G.signal[right][thisy],G.signal_buffer[right][thisy]);
+                upsignal = Math.max(G.signal[thisx][up][0],G.signal_buffer[thisx][up][0]);
+                thidsignal = Math.max(G.signal[thisx][thisy][0],G.signal_buffer[thisx][thisy][0]);
+                downsignal = Math.max(G.signal[thisx][down][0],G.signal_buffer[thisx][down][0]);
+                leftsignal = Math.max(G.signal[left][thisy][0],G.signal_buffer[left][thisy][0]);
+                rightsignal = Math.max(G.signal[right][thisy][0],G.signal_buffer[right][thisy][0]);
+                if (G.number_of_layers==2){
+                    upsignal2 = Math.max(G.signal[thisx][up][1],G.signal_buffer[thisx][up][1]);
+                    thidsignal2 = Math.max(G.signal[thisx][thisy][1],G.signal_buffer[thisx][thisy][1]);
+                    downsignal2 = Math.max(G.signal[thisx][down][1],G.signal_buffer[thisx][down][1]);
+                    leftsignal2 = Math.max(G.signal[left][thisy][1],G.signal_buffer[left][thisy][1]);
+                    rightsignal2 = Math.max(G.signal[right][thisy][1],G.signal_buffer[right][thisy][1]);
+                    if(upsignal2!=0 || downsignal2!=0 || leftsignal2!=0 || rightsignal2!=0 || thidsignal2!=0){
+                        this.any_signal=true;
+                        G.signaled_moved++;
+                    }
+                }
+
             }else{
-                upsignal = G.signal[thisx][up];
-                thidsignal = G.signal[thisx][thisy];
-                downsignal = G.signal[thisx][down];
-                leftsignal = G.signal[left][thisy];
-                rightsignal = G.signal[right][thisy];
+                upsignal = G.signal[thisx][up][0];
+                thidsignal = G.signal[thisx][thisy][0];
+                downsignal = G.signal[thisx][down][0];
+                leftsignal = G.signal[left][thisy][0];
+                rightsignal = G.signal[right][thisy][0];
             }
-            if(upsignal!=0 || downsignal!=0 || leftsignal!=0 || rightsignal!=0 || thidsignal!=0){
+            if((upsignal!=0 || downsignal!=0 || leftsignal!=0 || rightsignal!=0 || thidsignal!=0) && !this.any_signal){
                 this.any_signal=true;
                 G.signaled_moved++;
             }
-            if(G.communicate){
+
+            if(G.extended){
                 int exup = Math.floorMod(G.ItoY(this.Isq()) - 2, G.yDim);
                 int exdown = Math.floorMod((G.ItoY(this.Isq()) + 2), G.yDim);
                 int exleft = (Math.floorMod((G.ItoX(this.Isq()) - 2), G.xDim));
@@ -562,9 +599,14 @@ class Celula extends AgentSQ2D<EvolutionModel> {
                 int diagonal2= G.neighborhood[left][down];
                 int diagonal3= G.neighborhood[left][up];
                 int diagonal4= G.neighborhood[right][down];
+
                 input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh, thidsignal,exupneigh,exdownneigh,exrightneigh,exleftneigh,diagonal1,diagonal2,diagonal3,diagonal4, upsignal, downsignal, rightsignal, leftsignal};
             }else {
-                input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh, thidsignal, upsignal, downsignal, rightsignal, leftsignal};
+                if(G.number_of_layers==2){
+                    input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh, thidsignal, upsignal, downsignal, rightsignal, leftsignal, thidsignal2, upsignal2, downsignal2, rightsignal2, leftsignal2};
+                }else {
+                    input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh, thidsignal, upsignal, downsignal, rightsignal, leftsignal};
+                }
             }
         }else {
             input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh};
@@ -572,7 +614,7 @@ class Celula extends AgentSQ2D<EvolutionModel> {
 
         float[] output = G.networks.get(G.FindIndex(index)).Compute(input, 1);
         if(G.networks.get(G.FindIndex(index)).Samples < G.maxSamples && !G.retrieve) {
-            G.networks.get(G.FindIndex(index)).Sample(G.limits,G.communicate,G.extended);
+            G.networks.get(G.FindIndex(index)).Sample(G.limits,G.communicate,G.extended,G.number_of_layers);
         }
         int responce = G.AC.getIndexOfLargest(output);
         if (output[responce] < 0) {
@@ -584,11 +626,23 @@ class Celula extends AgentSQ2D<EvolutionModel> {
             } else {
                 output[7] = 0;
             }
-            G.signal[thisx][thisy] = (int) output[7];
-            G.signal[left][thisy] = (int) output[7];
-            G.signal[right][thisy] = (int) output[7];
-            G.signal[thisx][up] = (int) output[7];
-            G.signal[thisx][down] = (int) output[7];
+            G.signal[thisx][thisy][0] = (int) output[7];
+            G.signal[left][thisy][0] = (int) output[7];
+            G.signal[right][thisy][0] = (int) output[7];
+            G.signal[thisx][up][0] = (int) output[7];
+            G.signal[thisx][down][0] = (int) output[7];
+            for (int i = 1; i <G.number_of_layers ; i++) {
+                if (output[7+i] > 0.5) {
+                    output[7+i] = 1;
+                } else {
+                    output[7+i] = 0;
+                }
+                G.signal[thisx][thisy][i] = (int) output[7+i];
+                G.signal[left][thisy][i] = (int) output[7+i];
+                G.signal[right][thisy][i] = (int) output[7+i];
+                G.signal[thisx][up][i] = (int) output[7+i];
+                G.signal[thisx][down][i] = (int) output[7+i];
+            }
         }
 
         boolean dies=responce==1;
