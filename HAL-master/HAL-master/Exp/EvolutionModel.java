@@ -86,7 +86,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             }
             for (int i = 0; i < number_of_layers; i++) {
                 for (int j = 0; j < 5; j++) {
-                    limits[current+i*5+j]=1;
+                    limits[current+j]=1;
                 }
                 current+=5;
             }
