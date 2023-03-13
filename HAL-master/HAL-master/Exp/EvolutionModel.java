@@ -330,7 +330,6 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             if(extended){
                 communicates=true;
             }
-            signal_resistance=!signal_resistance;
             int time = 0;
             int Pop;
             int xDim=200 , yDim=200;
