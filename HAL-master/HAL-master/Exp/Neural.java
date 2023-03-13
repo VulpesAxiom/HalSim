@@ -120,58 +120,21 @@ class Neural {
    public void Sample(float[] limits,boolean communicate,boolean extended,int number_of_layers) {
        this.Samples++;
        float rng = (float) this.rng.Double(limits[0]);
-       float energy = (float) this.rng.Double(limits[1]);
-       float ufood = (float) this.rng.Double(limits[2]);
-       float nfood = (float) this.rng.Double(limits[3]);
-       float sfood = (float) this.rng.Double(limits[4]);
-       float wfood = (float) this.rng.Double(limits[5]);
-       float efood = (float) this.rng.Double(limits[6]);
-       float uneigh = (float) this.rng.Double(limits[7]);
-       float nneigh = (float) this.rng.Double(limits[8]);
-       float sneigh = (float) this.rng.Double(limits[9]);
-       float wneigh = (float) this.rng.Double(limits[10]);
-       float eneigh = (float) this.rng.Double(limits[11]);
-       float[] input;
-       if(communicate) {
-           if(extended){
-               float exnneigh = (float) this.rng.Double(limits[12]);
-               float exsneigh = (float) this.rng.Double(limits[13]);
-               float exwneigh = (float) this.rng.Double(limits[14]);
-               float exeneigh = (float) this.rng.Double(limits[15]);
-               float dia1 = (float) this.rng.Double(limits[16]);
-               float dia2 = (float) this.rng.Double(limits[17]);
-               float dia3 = (float) this.rng.Double(limits[18]);
-               float dia4 = (float) this.rng.Double(limits[19]);
-               float usig = (float) this.rng.Double(limits[20]);
-               float nsig = (float) this.rng.Double(limits[21]);
-               float ssig = (float) this.rng.Double(limits[22]);
-               float wsig = (float) this.rng.Double(limits[23]);
-               float esig = (float) this.rng.Double(limits[24]);
-               input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh,exnneigh,exsneigh,exwneigh,exeneigh,dia1,dia2,dia3,dia4, usig, nsig, ssig, wsig, esig};
 
-           }else {
-               if(number_of_layers==2) {
-                   float usig = (float) this.rng.Double(limits[12]);
-                   float nsig = (float) this.rng.Double(limits[13]);
-                   float ssig = (float) this.rng.Double(limits[14]);
-                   float wsig = (float) this.rng.Double(limits[15]);
-                   float esig = (float) this.rng.Double(limits[16]);
-                   float usig2 = (float) this.rng.Double(limits[17]);
-                   float nsig2 = (float) this.rng.Double(limits[18]);
-                   float ssig2 = (float) this.rng.Double(limits[19]);
-                   float wsig2 = (float) this.rng.Double(limits[20]);
-                   float esig2 = (float) this.rng.Double(limits[21]);
-                   input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh, usig, nsig, ssig, wsig, esig, usig2, nsig2, ssig2, wsig2, esig2};
-               }else{float usig = (float) this.rng.Double(limits[12]);
-                   float nsig = (float) this.rng.Double(limits[13]);
-                   float ssig = (float) this.rng.Double(limits[14]);
-                   float wsig = (float) this.rng.Double(limits[15]);
-                   float esig = (float) this.rng.Double(limits[16]);
-                   input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh, usig, nsig, ssig, wsig, esig};}
-           }
-       }else {
-           input = new float[]{rng, energy, ufood, nfood, sfood, wfood, efood, uneigh, nneigh, sneigh, wneigh, eneigh};
-       }float[] input2;
+       int length_of_input=12;
+       if(communicate){
+           length_of_input+=5*number_of_layers;
+       }
+       if(extended){
+           length_of_input+=5;
+       }
+       float[] input= new float[length_of_input];
+       input[0]=rng;
+       for (int i = 1; i < length_of_input; i++) {
+           input[i]=(float) this.rng.Double(limits[i]);
+       }
+
+       float[] input2;
        float[] output1 = this.Compute(input, 1);
        float[] output2;
        float[] error;

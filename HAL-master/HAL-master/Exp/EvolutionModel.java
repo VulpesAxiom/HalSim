@@ -315,7 +315,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
 
     public static void main(String[] args) throws Exception {
         Rand rng=new Rand(131175L);
-        int iteration =121,last_iteration=136;
+        int iteration =121,last_iteration=135;
         float MStrength=10;
         float mutability=0.16f;
         int initialNumber=250;
@@ -535,82 +535,62 @@ class Celula extends AgentSQ2D<EvolutionModel> {
         int thisy=G.ItoY(this.Isq());
         int left=(Math.floorMod((G.ItoX(this.Isq())-1),G.xDim));
         int right=(Math.floorMod((G.ItoX(this.Isq())+1),G.xDim));
-
-        int upneigh= G.neighborhood[thisx][up];
-        int thidneigh= G.neighborhood[thisx][thisy];
-        int downneigh= G.neighborhood[thisx][down];
-        int leftneigh= G.neighborhood[left][thisy];
-        int rightneigh= G.neighborhood[right][thisy];
-
-        int upfood=G.food[thisx][up];
-        int leftfood=G.food[left][thisy];
-        int rightfood=G.food[right][thisy];
-        int downfood=G.food[thisx][down];
-        int thisfood=G.food[thisx][thisy];
-            int upsignal2=0;
-            int thidsignal2=0;
-            int downsignal2=0;
-            int leftsignal2=0;
-            int rightsignal2=0;
-        float[] input;
-        this.any_signal=false;
-        if(G.communicate) {
-            int upsignal,thidsignal,downsignal,leftsignal,rightsignal;
-            if(G.special_comms){
-                upsignal = Math.max(G.signal[thisx][up][0],G.signal_buffer[thisx][up][0]);
-                thidsignal = Math.max(G.signal[thisx][thisy][0],G.signal_buffer[thisx][thisy][0]);
-                downsignal = Math.max(G.signal[thisx][down][0],G.signal_buffer[thisx][down][0]);
-                leftsignal = Math.max(G.signal[left][thisy][0],G.signal_buffer[left][thisy][0]);
-                rightsignal = Math.max(G.signal[right][thisy][0],G.signal_buffer[right][thisy][0]);
-                if (G.number_of_layers==2){
-                    upsignal2 = Math.max(G.signal[thisx][up][1],G.signal_buffer[thisx][up][1]);
-                    thidsignal2 = Math.max(G.signal[thisx][thisy][1],G.signal_buffer[thisx][thisy][1]);
-                    downsignal2 = Math.max(G.signal[thisx][down][1],G.signal_buffer[thisx][down][1]);
-                    leftsignal2 = Math.max(G.signal[left][thisy][1],G.signal_buffer[left][thisy][1]);
-                    rightsignal2 = Math.max(G.signal[right][thisy][1],G.signal_buffer[right][thisy][1]);
-                    if(upsignal2!=0 || downsignal2!=0 || leftsignal2!=0 || rightsignal2!=0 || thidsignal2!=0){
-                        this.any_signal=true;
-                        G.signaled_moved++;
-                    }
-                }
-
-            }else{
-                upsignal = G.signal[thisx][up][0];
-                thidsignal = G.signal[thisx][thisy][0];
-                downsignal = G.signal[thisx][down][0];
-                leftsignal = G.signal[left][thisy][0];
-                rightsignal = G.signal[right][thisy][0];
-            }
-            if((upsignal!=0 || downsignal!=0 || leftsignal!=0 || rightsignal!=0 || thidsignal!=0) && !this.any_signal){
-                this.any_signal=true;
-                G.signaled_moved++;
-            }
-
-            if(G.extended){
-                int exup = Math.floorMod(G.ItoY(this.Isq()) - 2, G.yDim);
-                int exdown = Math.floorMod((G.ItoY(this.Isq()) + 2), G.yDim);
-                int exleft = (Math.floorMod((G.ItoX(this.Isq()) - 2), G.xDim));
-                int exright = (Math.floorMod((G.ItoX(this.Isq()) + 2), G.xDim));
-                int exupneigh= G.neighborhood[thisx][exup];
-                int exdownneigh= G.neighborhood[thisx][exdown];
-                int exleftneigh= G.neighborhood[exleft][thisy];
-                int exrightneigh= G.neighborhood[exright][thisy];
-                int diagonal1= G.neighborhood[right][up];
-                int diagonal2= G.neighborhood[left][down];
-                int diagonal3= G.neighborhood[left][up];
-                int diagonal4= G.neighborhood[right][down];
-
-                input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh, thidsignal,exupneigh,exdownneigh,exrightneigh,exleftneigh,diagonal1,diagonal2,diagonal3,diagonal4, upsignal, downsignal, rightsignal, leftsignal};
-            }else {
-                if(G.number_of_layers==2){
-                    input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh, thidsignal, upsignal, downsignal, rightsignal, leftsignal, thidsignal2, upsignal2, downsignal2, rightsignal2, leftsignal2};
-                }else {
-                    input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh, thidsignal, upsignal, downsignal, rightsignal, leftsignal};
-                }
-            }
-        }else {
-            input = new float[]{rng, this.energy, thisfood, upfood, downfood, rightfood, leftfood, thidneigh, upneigh, downneigh, rightneigh, leftneigh};
+        int length_of_input=12;
+        if(G.communicate){
+            length_of_input+=5*G.number_of_layers;
         }
+        if(G.extended){
+            length_of_input+=5;
+        }
+        float[] input= new float[length_of_input];
+        input[0]=rng;
+        input[1]=this.energy;
+        input[2]=G.food[thisx][up];
+        input[3]=G.food[left][thisy];
+        input[4]=G.food[right][thisy];
+        input[5]=G.food[thisx][down];
+        input[6]=G.food[thisx][thisy];
+
+        input[7]= G.neighborhood[thisx][up];
+        input[8]= G.neighborhood[thisx][thisy];
+        input[9]= G.neighborhood[thisx][down];
+        input[10]= G.neighborhood[left][thisy];
+        input[11]= G.neighborhood[right][thisy];
+        int this_neigh= (int) (input[7]+input[8]+input[9]+input[10]+input[11]);
+        int current =12;
+        if(G.extended){
+            int exup = Math.floorMod(G.ItoY(this.Isq()) - 2, G.yDim);
+            int exdown = Math.floorMod((G.ItoY(this.Isq()) + 2), G.yDim);
+            int exleft = (Math.floorMod((G.ItoX(this.Isq()) - 2), G.xDim));
+            int exright = (Math.floorMod((G.ItoX(this.Isq()) + 2), G.xDim));
+            input[current] = G.neighborhood[thisx][exup];
+            input[current+1]= G.neighborhood[thisx][exdown];
+            input[current+2]= G.neighborhood[exleft][thisy];
+            input[current+3]= G.neighborhood[exright][thisy];
+            input[current+4]= G.neighborhood[right][up];
+            input[current+5]= G.neighborhood[left][down];
+            input[current+6]= G.neighborhood[left][up];
+            input[current+7]= G.neighborhood[right][down];
+            current+=5;
+
+        }
+        this.any_signal=false;
+        if(G.communicate){
+            for (int i = 0; i < G.number_of_layers; i++) {
+                input[current]=Math.max(G.signal[thisx][up][0],G.signal_buffer[thisx][up][i]);
+                input[current+1] = Math.max(G.signal[thisx][thisy][0],G.signal_buffer[thisx][thisy][i]);
+                input[current+2] = Math.max(G.signal[thisx][down][0],G.signal_buffer[thisx][down][i]);
+                input[current+3] = Math.max(G.signal[left][thisy][0],G.signal_buffer[left][thisy][i]);
+                input[current+4] = Math.max(G.signal[right][thisy][0],G.signal_buffer[right][thisy][i]);
+                if(input[current]!=0 ||input[current+1]!=0 ||input[current+2]!=0 || input[current+3]!=0 || input[current+4]!=0){
+                    this.any_signal=true;
+                    G.signaled_moved++;
+                }
+                current+=5;
+            }
+        }
+
+
 
         float[] output = G.networks.get(G.FindIndex(index)).Compute(input, 1);
         if(G.networks.get(G.FindIndex(index)).Samples < G.maxSamples && !G.retrieve) {
@@ -752,8 +732,8 @@ class Celula extends AgentSQ2D<EvolutionModel> {
         if (this.energy < 0) {
             this.energy = 0;
         }
-        if ((suffocates && thidneigh>5) || dies) {
-            if(suffocates && thidneigh>5){
+        if ((suffocates && this_neigh>5) || dies) {
+            if(suffocates && this_neigh>5){
                 G.activity[4]++;
                 if(any_signal){
                     G.activity[9]++;
