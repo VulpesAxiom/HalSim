@@ -57,19 +57,41 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         this.number_of_layers=number_of_layers;
         signaled_moved=0;
         this.special_comms=special_comms;
+        int length_of_limits=12;
+
         if(communicates) {
             if(extended){
-                limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
-            }else {
-                if(number_of_layers==2){
-                    limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-                }else {
-                    limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1};
-                }
+                length_of_limits+=8;
+
             }
-        }else {
-            limits = new float[]{10, 20, 20, 20, 20, 20, 20, 5, 5, 5, 5, 5};
+            length_of_limits+=5*number_of_layers;
         }
+        limits=new float[length_of_limits];
+        limits[0]=10;
+        int current=0;
+        for (int i = 1; i <7 ; i++) {
+            limits[i]=20;
+            current=i+1;
+        }
+        for (int i = 0; i <5 ; i++) {
+            limits[current+i]=20;
+        }
+        current+=5;
+        if(communicates){
+            if(extended){
+                for (int i = 0; i < 8; i++) {
+                    limits[current+i]=5;
+                }
+                current+=8;
+            }
+            for (int i = 0; i < number_of_layers; i++) {
+                for (int j = 0; j < 5; j++) {
+                    limits[current+i]=1;
+                }
+                current+=5;
+            }
+        }
+
         this.communicate=communicates;
         if (retrieve) {
             maxSamples =0;
@@ -539,7 +561,7 @@ class Celula extends AgentSQ2D<EvolutionModel> {
             length_of_input+=5*G.number_of_layers;
         }
         if(G.extended){
-            length_of_input+=5;
+            length_of_input+=8;
         }
         float[] input= new float[length_of_input];
         input[0]=rng;

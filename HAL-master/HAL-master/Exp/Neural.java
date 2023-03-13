@@ -126,7 +126,7 @@ class Neural {
            length_of_input+=5*number_of_layers;
        }
        if(extended){
-           length_of_input+=5;
+           length_of_input+=8;
        }
        float[] input= new float[length_of_input];
        input[0]=rng;
