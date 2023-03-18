@@ -115,9 +115,9 @@ class Neural {
         for(int i=0;i<limits.length;i++){
             AcumError.append(";").append(this.acum_error[i]);
         }
-        StoreLine(filepath  + "Error.txt",this.index+";"+this.parentIndex+";"+this.bornedAt+";"+this.died+AcumError);
+        StoreLine(filepath  + "Error.txt",this.index+";"+this.parentIndex+";"+this.bornedAt+";"+this.died+AcumError,false);
     }
-   public void Sample(float[] limits,boolean communicate,boolean extended,int number_of_layers) {
+   public void Sample(float[] limits,boolean communicate,boolean extended,int number_of_layers,boolean memory) {
        this.Samples++;
        float rng = (float) this.rng.Double(limits[0]);
 
@@ -127,6 +127,9 @@ class Neural {
        }
        if(extended){
            length_of_input+=8;
+       }
+       if(memory){
+           length_of_input++;
        }
        float[] input= new float[length_of_input];
        input[0]=rng;

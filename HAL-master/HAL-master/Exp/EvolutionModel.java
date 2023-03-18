@@ -36,7 +36,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     int[][] neighborhood;
     int[][][] signal,signal_buffer;
 
-    boolean special_comms,extended;
+    boolean special_comms,extended,memory;
 
     public int FindIndex(int index) {
         for (int i = 0; i < networks.size(); i++) {
@@ -48,23 +48,29 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         return -1;
     }
 
-    public EvolutionModel(int x, int y, int initial, int maxInnerEnergy, int iteration, long seed,boolean communicates,boolean retrieve,boolean special_comms,boolean extended,int number_of_layers) throws FileNotFoundException {
+    public EvolutionModel(int x, int y, int initial, int maxInnerEnergy, int iteration, long seed,boolean communicates,boolean retrieve,boolean special_comms,boolean extended,int number_of_layers,boolean memory) throws FileNotFoundException {
         super(x, y, Celula.class, true, true);
         this.seed=seed;
         movement=new float[6];
         activity=new float[15];
+        this.memory=memory;
         this.extended=extended;
         this.number_of_layers=number_of_layers;
         signaled_moved=0;
         this.special_comms=special_comms;
         int length_of_limits=12;
-
+        if(memory){
+            number_of_layers++;
+        }
         if(communicates) {
             if(extended){
                 length_of_limits+=8;
 
             }
             length_of_limits+=5*number_of_layers;
+        }
+        if(memory){
+            length_of_limits++;
         }
         limits=new float[length_of_limits];
         limits[0]=10;
@@ -91,7 +97,9 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                 current+=5;
             }
         }
-
+        if(memory){
+            limits[current]=1;
+        }
         this.communicate=communicates;
         if (retrieve) {
             maxSamples =0;
@@ -117,7 +125,10 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         AC.ConstantThis(food, initial);
         this.maxInnerEnergy = maxInnerEnergy;
     }
-    static public void StoreLine(String filename, String lineToAppend) {
+    static public void StoreLine(String filename, String lineToAppend,boolean delete) {
+        if(delete){
+            new File(filename).delete();
+        }
         if (!new File(filename).exists()) {
             File file = new File(filename);
             try {
@@ -337,15 +348,15 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
 
     public static void main(String[] args) throws Exception {
         Rand rng=new Rand(131175L);
-        int iteration =121,last_iteration=135;
+        int iteration =181,last_iteration=181;
         float MStrength=10;
         float mutability=0.16f;
         int initialNumber=250;
         boolean Suffocate=true;
         float subFreq=.05f;
         int Duration=10000;
-        boolean to_draw=false,communicates=true,retrieve=false,signal_resistance=true,repeat_seed=false,extended =false;
-        int number_of_layers=2;
+        boolean to_draw=false,memory=true,communicates=true,retrieve=false,signal_resistance=true,repeat_seed=false,extended =false;
+        int number_of_layers=1;
 
 
         while (iteration <= last_iteration ) {
@@ -374,7 +385,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             }else {
                 seed = rng.Long(1000);
             }
-            EvolutionModel model = new EvolutionModel(xDim, yDim, initial, maxima,iteration,seed,communicates,retrieve,signal_resistance,extended,number_of_layers);
+            EvolutionModel model = new EvolutionModel(xDim, yDim, initial, maxima,iteration,seed,communicates,retrieve,signal_resistance,extended,number_of_layers,memory);
             File directory = new File(model.filepath);
             if (! directory.exists()){
                 boolean done=false;
@@ -383,7 +394,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                 }
             }
             if(!retrieve) {
-                StoreLine(model.filepath + "Description.txt", "Semilla:" + model.seed + ", xDim:" + xDim + ", yDim:" + yDim);
+                StoreLine(model.filepath + "Description.txt", "Semilla:" + model.seed + ", xDim:" + xDim + ", yDim:" + yDim,false);
             }
             model.maximumFood = 10;
             model.Dictionary.add("Random");
@@ -398,6 +409,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             model.Dictionary.add("SouthNeigh");
             model.Dictionary.add("WestNeigh");
             model.Dictionary.add("EastNeigh");
+
             if(communicates) {
                 if(extended){
                     model.Dictionary.add("ExNorthNeigh");
@@ -421,17 +433,22 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                     model.Dictionary.add("WestSignal"+j+1);
                     model.Dictionary.add("EastSignal"+j+1);
                 }
-                architecture=new int[]{model.Dictionary.size(),25,7 +number_of_layers};
-            }else {
-                architecture = new int[]{model.Dictionary.size(), 25, 7};
+
+            }else{
+                number_of_layers=0;
             }
+            if(memory){
+                model.Dictionary.add("Memory");
+                number_of_layers+=1;
+            }
+            architecture=new int[]{model.Dictionary.size(),25,7 +number_of_layers};
             model.Setup(initialNumber,BeginnerBoost,MStrength,architecture,mutability);
             model.CheckPop();
             long starting = System.currentTimeMillis();
             long minute;
             long hour;
             long second;
-
+            int population=0;
 
             while (model.CheckPop2() && (time < Duration)) {
 
@@ -442,15 +459,17 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
 
                 model.ShuffleAgents(model.rng);
                 Pop=model.Pop();
+                population=0;
                 for (Celula cell : model) {
                     cell.Step(time,Suffocate);
+                    population++;
                 }
                 if(!retrieve) {
                     for (int iterante = model.networks.size() - 1; iterante >= 0; iterante--) {
                         Neural net = model.networks.get(iterante);
                         if (net.Extinct && net.Samples < model.maxSamples) {
                             for (int contador = 0; contador < 10; contador++) {
-                                net.Sample(model.limits, model.communicate,model.extended, model.number_of_layers);
+                                net.Sample(model.limits, model.communicate,model.extended, model.number_of_layers,model.memory);
                                 if (net.Samples >= model.maxSamples) {
                                     if (!retrieve) {
                                         net.StoreSample(model.limits, model.filepath);
@@ -478,20 +497,24 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
 
 
                 System.out.println(hour + ":" + minute + ":" + second + "  ;" + time+ "  ;" +Pop);
-                StoreLine(model.filepath+"Populations.txt",time+";"+Pop+";"+ model.signaled_moved+";"+(Pop-model.signaled_moved));
-                model.movement[0] /=Pop;
-                model.movement[1] /=Pop;
+                boolean delete=false;
+                if(time==0){
+                    delete=true;
+                }
+                StoreLine(model.filepath+"Populations.txt",time+";"+population+";"+ model.signaled_moved+";"+(population-model.signaled_moved),delete);
+                model.movement[0] /=population;
+                model.movement[1] /=population;
                 model.movement[2] /= model.signaled_moved;
                 model.movement[3] /=model.signaled_moved;
-                model.movement[4] /=(Pop-model.signaled_moved);
-                model.movement[5] /=(Pop-model.signaled_moved);
-                StoreLine(model.filepath+"Movement.txt",time+";"+model.AC.ToString(model.movement));
+                model.movement[4] /=(population-model.signaled_moved);
+                model.movement[5] /=(population-model.signaled_moved);
+                StoreLine(model.filepath+"Movement.txt",time+";"+model.AC.ToString(model.movement),delete);
                 for(int i=0;i<5;i++){
-                    model.activity[i]/=Pop;
+                    model.activity[i]/=population;
                     model.activity[i+5]/=model.signaled_moved;
-                    model.activity[i+10]/=(Pop-model.signaled_moved);
+                    model.activity[i+10]/=(population-model.signaled_moved);
                 }
-                StoreLine(model.filepath+"Activity.txt",time+";"+model.AC.ToString(model.activity));
+                StoreLine(model.filepath+"Activity.txt",time+";"+model.AC.ToString(model.activity),delete);
                 model.signaled_moved=0;
                 model.movement=new float[6];
                 model.activity=new float[15];
@@ -505,7 +528,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                 for (int iterante = model.networks.size() - 1; iterante >= 0; iterante--) {
                     Neural net = model.networks.get(iterante);
                     while (net.Samples < model.maxSamples) {
-                        net.Sample(model.limits, model.communicate,model.extended,model.number_of_layers);
+                        net.Sample(model.limits, model.communicate,model.extended,model.number_of_layers,model.memory);
                     }
 
                     net.StoreSample(model.limits, model.filepath);
@@ -525,11 +548,13 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
 class Celula extends AgentSQ2D<EvolutionModel> {
     int index;
     int energy;
+    int memory;
     boolean any_signal;
     float mutability, strength;
     int order;
     public void Init(int index, float mutability, float strength) {
         energy = 1;
+        memory=0;
         order=-1;
         this.index = index;
         this.strength = strength;
@@ -562,6 +587,9 @@ class Celula extends AgentSQ2D<EvolutionModel> {
         }
         if(G.extended){
             length_of_input+=8;
+        }
+        if(G.memory){
+            length_of_input++;
         }
         float[] input= new float[length_of_input];
         input[0]=rng;
@@ -603,35 +631,27 @@ class Celula extends AgentSQ2D<EvolutionModel> {
                 input[current+2] = Math.max(G.signal[thisx][down][0],G.signal_buffer[thisx][down][i]);
                 input[current+3] = Math.max(G.signal[left][thisy][0],G.signal_buffer[left][thisy][i]);
                 input[current+4] = Math.max(G.signal[right][thisy][0],G.signal_buffer[right][thisy][i]);
-                if(input[current]!=0 ||input[current+1]!=0 ||input[current+2]!=0 || input[current+3]!=0 || input[current+4]!=0){
-                    this.any_signal=true;
-                    G.signaled_moved++;
+                if((input[current]!=0 ||input[current+1]!=0 ||input[current+2]!=0 || input[current+3]!=0 || input[current+4]!=0)&& !this.any_signal){
+                        G.signaled_moved++;
+                        this.any_signal = true;
                 }
                 current+=5;
             }
         }
-
+        if(G.memory){
+            input[current]=this.memory;
+        }
 
 
         float[] output = G.networks.get(G.FindIndex(index)).Compute(input, 1);
         if(G.networks.get(G.FindIndex(index)).Samples < G.maxSamples && !G.retrieve) {
-            G.networks.get(G.FindIndex(index)).Sample(G.limits,G.communicate,G.extended,G.number_of_layers);
+            G.networks.get(G.FindIndex(index)).Sample(G.limits,G.communicate,G.extended,G.number_of_layers,G.memory);
         }
         int responce = G.AC.getIndexOfLargest(output);
         if (output[responce] < 0) {
             responce = 3;
         }
         if(G.communicate) {
-            if (output[7] > 0.5) {
-                output[7] = 1;
-            } else {
-                output[7] = 0;
-            }
-            G.signal[thisx][thisy][0] = (int) output[7];
-            G.signal[left][thisy][0] = (int) output[7];
-            G.signal[right][thisy][0] = (int) output[7];
-            G.signal[thisx][up][0] = (int) output[7];
-            G.signal[thisx][down][0] = (int) output[7];
             for (int i = 1; i <G.number_of_layers ; i++) {
                 if (output[7+i] > 0.5) {
                     output[7+i] = 1;
@@ -644,6 +664,15 @@ class Celula extends AgentSQ2D<EvolutionModel> {
                 G.signal[thisx][up][i] = (int) output[7+i];
                 G.signal[thisx][down][i] = (int) output[7+i];
             }
+        }
+        if(G.memory){
+
+            if (output[output.length-1] > 0.5) {
+                output[output.length-1] = 1;
+            } else {
+                output[output.length-1] = 0;
+            }
+            this.memory= (int) output[output.length-1];
         }
 
         boolean dies=responce==1;
@@ -664,8 +693,9 @@ class Celula extends AgentSQ2D<EvolutionModel> {
                 } else {
                     G.activity[14]++;
                 }
+                dies = true;
             }
-            dies = true;
+
         } else {
             switch (responce) {
                 case 0 -> {
@@ -754,7 +784,7 @@ class Celula extends AgentSQ2D<EvolutionModel> {
             this.energy = 0;
         }
         if ((suffocates && this_neigh>5) || dies) {
-            if(suffocates && this_neigh>5){
+            if((suffocates && this_neigh>5) && !dies){
                 G.activity[4]++;
                 if(any_signal){
                     G.activity[9]++;
