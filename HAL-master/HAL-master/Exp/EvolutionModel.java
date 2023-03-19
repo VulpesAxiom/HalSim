@@ -59,9 +59,6 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         signaled_moved=0;
         this.special_comms=special_comms;
         int length_of_limits=12;
-        if(memory){
-            number_of_layers++;
-        }
         if(communicates) {
             if(extended){
                 length_of_limits+=8;
@@ -80,7 +77,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             current=i+1;
         }
         for (int i = 0; i <5 ; i++) {
-            limits[current+i]=20;
+            limits[current+i]=5;
         }
         current+=5;
         if(communicates){
@@ -106,7 +103,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         }else{
             maxSamples=5000;
         }
-        filepath = "C:\\Users\\bast_\\OneDrive\\Escritorio\\HalSim\\OutPutFile\\"+iteration+"/";
+        filepath = "C:\\Users\\Bastian\\Desktop\\Work\\"+iteration+"/";
         this.retrieve=retrieve;
         if(retrieve){
             File myObj = new File(filepath+"Description.txt");
@@ -347,8 +344,8 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     }
 
     public static void main(String[] args) throws Exception {
-        Rand rng=new Rand(131175L);
-        int iteration =181,last_iteration=181;
+        Rand rng=new Rand(67775L);
+        int iteration =211,last_iteration=240;
         float MStrength=10;
         float mutability=0.16f;
         int initialNumber=250;
@@ -442,6 +439,9 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                 number_of_layers+=1;
             }
             architecture=new int[]{model.Dictionary.size(),25,7 +number_of_layers};
+            if(memory){
+                number_of_layers--;
+            }
             model.Setup(initialNumber,BeginnerBoost,MStrength,architecture,mutability);
             model.CheckPop();
             long starting = System.currentTimeMillis();
