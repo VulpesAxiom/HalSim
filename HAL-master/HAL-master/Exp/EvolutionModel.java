@@ -26,18 +26,14 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     int maxInnerEnergy;
     int maximumFood;
     ArrayList<Neural> networks = new ArrayList<>();
-
     ArrayList<String> Dictionary = new ArrayList<>();
-
     ArraysManagement AC = new ArraysManagement();
     int maxIndex,signaled_moved,number_of_layers;
     int[][] food;
     float[] movement,activity;
     int[][] neighborhood;
     int[][][] signal,signal_buffer;
-
     boolean special_comms,extended,memory;
-
     public int FindIndex(int index) {
         for (int i = 0; i < networks.size(); i++) {
             if (networks.get(i).index == index) {
@@ -59,11 +55,12 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         signaled_moved=0;
         this.special_comms=special_comms;
         int length_of_limits=12;
-        if(communicates) {
-            if(extended){
-                length_of_limits+=8;
+        if(extended){
+            length_of_limits+=8;
 
-            }
+        }
+        if(communicates) {
+
             length_of_limits+=5*number_of_layers;
         }
         if(memory){
@@ -80,13 +77,14 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             limits[current+i]=5;
         }
         current+=5;
-        if(communicates){
-            if(extended){
-                for (int i = 0; i < 8; i++) {
-                    limits[current+i]=5;
-                }
-                current+=8;
+        if(extended){
+            for (int i = 0; i < 8; i++) {
+                limits[current+i]=5;
             }
+            current+=8;
+        }
+        if(communicates){
+
             for (int i = 0; i < number_of_layers; i++) {
                 for (int j = 0; j < 5; j++) {
                     limits[current+j]=1;
@@ -103,7 +101,7 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
         }else{
             maxSamples=5000;
         }
-        filepath = "C:\\Users\\Bastian\\Desktop\\Work\\"+iteration+"/";
+        filepath = "C:\\Users\\bast_\\OneDrive\\Escritorio\\HalSim\\OutPutFile\\"+iteration+"/";
         this.retrieve=retrieve;
         if(retrieve){
             File myObj = new File(filepath+"Description.txt");
@@ -143,129 +141,6 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             e.printStackTrace();
         }
     }
-
-    public void Load(String filename) {
-        try {
-            File myObj = new File(filepath + filename);
-            Scanner myReader = new Scanner(myObj);
-            int i = 0, x, y;
-            networks.clear();
-            while (myReader.hasNextLine()) {
-                x = i / yDim;
-                y = i % yDim;
-                String data = myReader.nextLine();
-                String[] subData = data.split(";");
-                food[x][y] = Integer.parseInt(subData[0]);
-                String[] subData2 = subData[1].split(",");
-                if (subData.length > 3) {
-                    String[] subData3 = subData[2].split(",");
-                    int[] ports = new int[subData3.length];
-                    for (int j = 0; j < subData3.length; j++) {
-                        ports[j] = Integer.parseInt(subData3[j]);
-                    }
-                    int index = Integer.parseInt(subData[3]);
-                    networks.add(new Neural(ports, index));
-                    networks.get(i).population = Integer.parseInt(subData[4]);
-                    for (int j = 0; j < subData.length - 5; j++) {
-                        String weights = subData[5 + j].split(":")[0];
-                        String[] weight = weights.split("'");
-                        for (int k = 0; k < weight.length; k++) {
-                            String[] rows = weight[k].split(",");
-                            for (int l = 0; l < rows.length; l++) {
-                                networks.get(i).pesos.get(j)[k][l] = Float.parseFloat(rows[l]);
-                            }
-                        }
-                        String biases = subData[5 + j].split(":")[1];
-                        String[] bias = biases.split(",");
-                        for (int k = 0; k < bias.length; k++) {
-                            networks.get(i).umbrales.get(j)[k] = Float.parseFloat(bias[k]);
-                        }
-                    }
-                }
-
-                if (GetAgent(i) != null) {
-                    GetAgent(i).Dispose();
-                }
-                if (subData2.length > 1) {
-                    NewAgentSQ(i).Init(Integer.parseInt(subData2[0]), Float.parseFloat(subData2[3]), Float.parseFloat(subData2[2]));
-
-                    GetAgent(i).energy = Integer.parseInt(subData2[1]);
-                }
-                i++;
-            }
-            myReader.close();
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
-    }
-
-    public void Save(String filename, int suffix) {
-        File tempFile = new File(filepath + filename + suffix + ".txt");
-        boolean exists = tempFile.exists();
-        if (!exists) {
-
-            try {
-                tempFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        Writer output;
-        int x, y;
-        try {
-            output = new BufferedWriter(new FileWriter(filepath + filename + suffix + ".txt", true));
-            for (int i = 0; i < xDim * yDim; i++) {
-                x = i / yDim;
-                y = i % yDim;
-                String cell;
-                StringBuilder neuron = new StringBuilder();
-                if (GetAgent(i) != null) {
-                    cell = GetAgent(i).index + "," + GetAgent(i).energy + "," + GetAgent(i).strength + "," + GetAgent(i).mutability;
-                } else {
-                    cell = "0";
-                }
-                if (i < networks.size()) {
-                    for (int j = 0; j < networks.get(i).ports.length; j++) {
-                        if (j != 0) {
-                            neuron.append(",");
-                        }
-                        neuron.append(networks.get(i).ports[j]);
-                    }
-                    neuron.append(";").append(networks.get(i).index).append(";").append(networks.get(i).population).append(";");
-                    for (int layer = 0; layer < networks.get(i).nlayers; layer++) {
-                        for (int row = 0; row < networks.get(i).umbrales.get(layer).length; row++) {
-                            for (int col = 0; col < networks.get(i).pesos.get(layer)[0].length; col++) {
-                                neuron.append(networks.get(i).pesos.get(layer)[row][col]);
-                                if (col < networks.get(i).pesos.get(layer)[0].length - 1) {
-                                    neuron.append(",");
-                                } else if (row < networks.get(i).umbrales.get(layer).length - 1) {
-                                    neuron.append("'");
-                                } else {
-                                    neuron.append(":");
-                                }
-                            }
-
-                        }
-                        for (int row = 0; row < networks.get(i).umbrales.get(layer).length; row++) {
-                            neuron.append(networks.get(i).umbrales.get(layer)[row]);
-                            if (row < networks.get(i).umbrales.get(layer).length - 1) {
-                                neuron.append(",");
-                            }
-                        }
-                        neuron.append(";");
-                    }
-                } else {
-                    neuron = new StringBuilder("0");
-                }
-                output.append(String.valueOf(food[x][y])).append(";").append(cell).append(";").append(neuron.toString()).append("\n");
-            }
-            output.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public void Setup(int maxIndex,int initFood,float Strength,int[] architecture,float mutability) {
         for (int i = 1; i <= maxIndex; i++) {
             NewAgentSQ( rng.Int(xDim), rng.Int(yDim)).Init(i, mutability, Strength,initFood);
@@ -289,15 +164,18 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
                 if(rng.Double()<((float)frequency)/(xDim*yDim)*Math.exp(-Math.pow(((float)sum/(maximumFood)-2.5f),2))) {
                     food[x][y] = Math.min((food[x][y] + amount), maximumFood);
                 }
-                if(special_comms){
-                    signal_buffer[x][y][0]=signal[x][y][0];
-                }
-                signal[x][y][0]=0;
-                for (int i = 1; i <number_of_layers ; i++) {
-                    if(special_comms){
-                        signal_buffer[x][y][i]=signal[x][y][i];
+                if(communicate) {
+                    if (special_comms) {
+                        signal_buffer[x][y][0] = signal[x][y][0];
                     }
-                    signal[x][y][i]=0;
+                    signal[x][y][0] = 0;
+
+                    for (int i = 1; i < number_of_layers; i++) {
+                        if (special_comms) {
+                            signal_buffer[x][y][i] = signal[x][y][i];
+                        }
+                        signal[x][y][i] = 0;
+                    }
                 }
             }
         }
@@ -344,22 +222,19 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     }
 
     public static void main(String[] args) throws Exception {
-        Rand rng=new Rand(67775L);
-        int iteration =211,last_iteration=240;
+        Rand rng=new Rand(524741L);
+        int iteration =500,last_iteration=500;
         float MStrength=10;
         float mutability=0.16f;
         int initialNumber=250;
         boolean Suffocate=true;
         float subFreq=.05f;
         int Duration=10000;
-        boolean to_draw=false,memory=true,communicates=true,retrieve=false,signal_resistance=true,repeat_seed=false,extended =false;
+        boolean to_draw=true,memory=true,communicates=true,retrieve=false,signal_resistance=true,repeat_seed=false,extended =false;
         int number_of_layers=1;
 
 
         while (iteration <= last_iteration ) {
-            if(extended){
-                communicates=true;
-            }
             int time = 0;
             int Pop;
             int xDim=200 , yDim=200;
@@ -406,18 +281,19 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
             model.Dictionary.add("SouthNeigh");
             model.Dictionary.add("WestNeigh");
             model.Dictionary.add("EastNeigh");
+            if(extended){
+                model.Dictionary.add("ExNorthNeigh");
+                model.Dictionary.add("ExSouthNeigh");
+                model.Dictionary.add("ExWestNeigh");
+                model.Dictionary.add("ExEastNeigh");
+                model.Dictionary.add("Diagonal1");
+                model.Dictionary.add("Diagonal2");
+                model.Dictionary.add("Diagonal3");
+                model.Dictionary.add("Diagonal3");
+            }
 
             if(communicates) {
-                if(extended){
-                    model.Dictionary.add("ExNorthNeigh");
-                    model.Dictionary.add("ExSouthNeigh");
-                    model.Dictionary.add("ExWestNeigh");
-                    model.Dictionary.add("ExEastNeigh");
-                    model.Dictionary.add("Diagonal1");
-                    model.Dictionary.add("Diagonal2");
-                    model.Dictionary.add("Diagonal3");
-                    model.Dictionary.add("Diagonal3");
-                }
+
                 model.Dictionary.add("UnderSignal");
                 model.Dictionary.add("NorthSignal");
                 model.Dictionary.add("SouthSignal");
@@ -652,17 +528,17 @@ class Celula extends AgentSQ2D<EvolutionModel> {
             responce = 3;
         }
         if(G.communicate) {
-            for (int i = 1; i <G.number_of_layers ; i++) {
+            for (int i = 0; i <G.number_of_layers ; i++) {
                 if (output[7+i] > 0.5) {
                     output[7+i] = 1;
                 } else {
                     output[7+i] = 0;
                 }
-                G.signal[thisx][thisy][i] = (int) output[7+i];
-                G.signal[left][thisy][i] = (int) output[7+i];
-                G.signal[right][thisy][i] = (int) output[7+i];
-                G.signal[thisx][up][i] = (int) output[7+i];
-                G.signal[thisx][down][i] = (int) output[7+i];
+                G.signal[thisx][thisy][i] = (int) output[7+i+1];
+                G.signal[left][thisy][i] = (int) output[7+i+1];
+                G.signal[right][thisy][i] = (int) output[7+i+1];
+                G.signal[thisx][up][i] = (int) output[7+i+1];
+                G.signal[thisx][down][i] = (int) output[7+i+1];
             }
         }
         if(G.memory){
