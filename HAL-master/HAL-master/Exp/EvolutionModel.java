@@ -222,8 +222,8 @@ public class EvolutionModel extends AgentGrid2D<Celula> {
     }
 
     public static void main(String[] args) throws Exception {
-        Rand rng=new Rand(524741L);
-        int iteration =500,last_iteration=500;
+        Rand rng=new Rand(564L);
+        int iteration =229,last_iteration=240;
         float MStrength=10;
         float mutability=0.16f;
         int initialNumber=250;
@@ -523,7 +523,7 @@ class Celula extends AgentSQ2D<EvolutionModel> {
         if(G.networks.get(G.FindIndex(index)).Samples < G.maxSamples && !G.retrieve) {
             G.networks.get(G.FindIndex(index)).Sample(G.limits,G.communicate,G.extended,G.number_of_layers,G.memory);
         }
-        int responce = G.AC.getIndexOfLargest(output);
+        int responce = G.AC.getIndexOfLargest(output,7);
         if (output[responce] < 0) {
             responce = 3;
         }
@@ -534,11 +534,11 @@ class Celula extends AgentSQ2D<EvolutionModel> {
                 } else {
                     output[7+i] = 0;
                 }
-                G.signal[thisx][thisy][i] = (int) output[7+i+1];
-                G.signal[left][thisy][i] = (int) output[7+i+1];
-                G.signal[right][thisy][i] = (int) output[7+i+1];
-                G.signal[thisx][up][i] = (int) output[7+i+1];
-                G.signal[thisx][down][i] = (int) output[7+i+1];
+                G.signal[thisx][thisy][i] = (int) output[7+i];
+                G.signal[left][thisy][i] = (int) output[7+i];
+                G.signal[right][thisy][i] = (int) output[7+i];
+                G.signal[thisx][up][i] = (int) output[7+i];
+                G.signal[thisx][down][i] = (int) output[7+i];
             }
         }
         if(G.memory){
@@ -784,14 +784,12 @@ class Celula extends AgentSQ2D<EvolutionModel> {
                     newMutability = 1 / (1 + exponential);
                 }
                 G.networks.get(G.FindIndex(newindex)).population++;
-                G.networks.get(G.FindIndex(newindex)).census++;
             } else {
                 newindex = ++G.maxIndex;
                 G.networks.add(G.networks.get(G.FindIndex(this.index)).Mutate(newindex, strength, this.index, G.seed, time));
             }
         } else {
             G.networks.get(G.FindIndex(this.index)).population++;
-            G.networks.get(G.FindIndex(this.index)).census++;
         }
         int place = this.Isq();
         G.NewAgentSQ(place).Init(newindex, newMutability, newStrength);

@@ -1,12 +1,20 @@
 package Exp;
 
 import java.io.Serializable;
-
+/*
+Esta clase se encarga de trabajar con vectores de 1 y 2 dimensiones
+ */
 public class ArraysManagement implements Serializable {
     public ArraysManagement() {
+        /*
+        Esta clase esta vacia
+         */
     }
 
     public void ConstantThis(int[][] array, int constant) {
+        /*
+        convierte los valores de un vector de dos dimenciones en una constante
+         */
         for (int i = 0; i < array.length; i++) {
             for (int j = 0; j < array[0].length; j++) {
                 array[i][j] = constant;
@@ -15,6 +23,9 @@ public class ArraysManagement implements Serializable {
     }
 
     public void Print(float[][] array) {
+        /*
+        Escribe en la consola los valores de un vector de dos dimensiones
+         */
         System.out.print("[ ");
         for (int i = 0; i < array.length - 1; i++) {
             for (int j = 0; j < array[0].length - 1; j++) {
@@ -30,17 +41,23 @@ public class ArraysManagement implements Serializable {
         System.out.println(array[array.length - 1][array[0].length - 1] + " ]");
     }
 
-    public int getIndexOfLargest(float[] array) {
-        if (array == null || array.length == 0) return -1; // null or empty
-
+    public int getIndexOfLargest(float[] array,int upTo) {
+        /*
+        Entrega el valor de la entrada más grande de un vector de una dimensión hasta
+        upTo
+         */
+        if (array == null || array.length == 0) return -1; //Si está vacia o de largo 0 se entrega un -1
         int largest = 0;
-        for (int i = 1; i < Math.min(array.length,7); i++) {
+        for (int i = 1; i < Math.min(array.length,upTo); i++) {
             if (array[i] > array[largest]) largest = i;
         }
-        return largest; // position of the first largest found
+        return largest;
     }
 
     public void Print(float[] array) {
+        /*
+        Escribe en la consola los valores de un vector de una dimensión
+         */
         System.out.print("[ ");
         for (int i = 0; i < array.length - 1; i++) {
             System.out.println(array[i] + " ;");
@@ -49,6 +66,9 @@ public class ArraysManagement implements Serializable {
     }
 
     public float[] Multiply(float[][] matrix, float[] input) {
+        /*Multiplica un vector de dos dimensiones con uno e una dimension como
+        Una matriz con un vector
+         */
         float[] output = new float[matrix.length];
         float sum;
         for (int row = 0; row < matrix.length; row++) {
@@ -60,16 +80,11 @@ public class ArraysManagement implements Serializable {
         }
         return output;
     }
-    public float[] Divide(float[] input, float factor) {
-        return Scale(input,1/factor);
-    }
-    public float[] Scale(float[]input,float factor){
-        for(int i=0;i< input.length;i++){
-            input[i]*=factor;
-        }
-        return input;
-    }
+
     public String ToString(float[] vector){
+        /*
+         Una funcion que convierte vectores (1D) en un string separado por ";"
+         */
         StringBuilder output= new StringBuilder();
         for (int i = 0; i < vector.length; i++) {
             if(i!=0){
@@ -81,6 +96,9 @@ public class ArraysManagement implements Serializable {
     }
 
     public float[] Subtract(float[] first, float[] second) {
+        /*
+        Sustrae el vector (1D) "second" al vector (1d) "first"
+         */
         float[] output = new float[first.length];
         if (first.length == second.length) {
 
@@ -95,6 +113,9 @@ public class ArraysManagement implements Serializable {
     }
 
     public float[] Sigmoid(float[] input) {
+        /*
+        Calcula el sigmoide de las entradas de un vector (1D)
+        */
         float[] output = new float[input.length];
         for (int i = 0; i < input.length; i++) {
             output[i] = (float) (2 / (1 + Math.exp(-input[i])) - 1);
@@ -103,6 +124,9 @@ public class ArraysManagement implements Serializable {
     }
 
     public float Norm(float[] vector) {
+        /*
+        Calcula la norma de un vector (1D)
+         */
         float result = 0;
         for (float v : vector) {
             result += v * v;
