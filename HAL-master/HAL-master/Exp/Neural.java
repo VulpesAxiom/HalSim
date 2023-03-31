@@ -129,42 +129,52 @@ class Neural {
            AC.Print(this.pesos.get(i));
            AC.Print(this.umbrales.get(i));
        }
-    }
-    public void StoreSample(float[] limits,String filepath){
-        StringBuilder AcumError = new StringBuilder();
-        for(int i=0;i<limits.length;i++){
-            AcumError.append(";").append(this.acum_error[i]);
-        }
-        StoreLine(filepath  + "Error.txt",this.index+";"+this.parentIndex+";"+this.bornAt +";"+this.died+AcumError,false);
+   }
+   public void StoreSample(float[] limits,String filepath) {
+       //Una vez todas las muestras han sido tomadas se almacenan en un archivo de texto
+       //El archivo se llama error
+       //Cada linea corresponde a un genoma
+       //Cada linea tiene data separada por ";"
+       //en orden la data es: indice, indice del padre, iteracion de nacimiento, iteracion de muerte y luego la lista de error acumulado
+       //La lista de error acumulado esta en el mismo orden que el dicionario de estimulos
+       StringBuilder AcumError = new StringBuilder();
+       for (int i = 0; i < limits.length; i++) {
+           AcumError.append(";").append(this.acum_error[i]);
+       }
+       StoreLine(filepath + "Error.txt", this.index + ";" + this.parentIndex + ";" + this.bornAt + ";" + this.died + AcumError, false);
     }
    public void Sample(float[] limits,boolean communicate,boolean extended,int number_of_layers,boolean memory) {
+       //en esta subrutina se realizan las muestras
+       //Para ello primero se calcula la cantidad de inputs que necesita simular un estimulo
        this.Samples++;
        float rng = (float) this.rng.Double(limits[0]);
 
-       int length_of_input=12;
-       if(communicate){
-           length_of_input+=5*number_of_layers;
+       int length_of_input = 12;
+       if (communicate) {
+           length_of_input += 5 * number_of_layers;
        }
-       if(extended){
-           length_of_input+=8;
+       if (extended) {
+           length_of_input += 8;
        }
-       if(memory){
+       if (memory) {
            length_of_input++;
        }
-       float[] input= new float[length_of_input];
-       input[0]=rng;
+       float[] input = new float[length_of_input];
+       //Tras haber determinado el largo de los vectores, se llena el vector input basado en los limites de los inputs
+       input[0] = rng;
        for (int i = 1; i < length_of_input; i++) {
-           input[i]=(float) this.rng.Double(limits[i]);
+           input[i] = (float) this.rng.Double(limits[i]);
        }
 
        float[] input2;
        float[] output1 = this.Compute(input, 1);
        float[] output2;
        float[] error;
+       //Por cada input se añade una perturbación y calcula la diferencia o error asociado
        for (int i = 0; i < input.length; i++) {
            error = new float[input.length];
            input2 = input;
-           input2[i] += limits[i]*0.01f;
+           input2[i] += limits[i] * 0.01f;
            output2 = this.Compute(input2, 1);
            for (int j = 0; j < output1.length; j++) {
                error[i] += Math.pow(output2[j] - output1[j], 2);
